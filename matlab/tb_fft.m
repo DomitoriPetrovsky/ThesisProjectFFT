@@ -6,7 +6,11 @@ N = CONVERSION_FORMAT;
 n = 0:N-1;
 F = 6;
 Fs = CONVERSION_FORMAT;
-REAL_COMP = 0.25*sin(2*pi*(F/Fs)*n)' + 0.25*sin(2*pi*(32/Fs)*n)' + 0.25*cos(2*pi*(12/Fs)*n)' + 0.25*sin(2*pi*(1/Fs)*n)';
+
+pd = makedist('Normal','mu',0.01,'sigma',0.05);
+p = random(pd, size(n))';
+
+REAL_COMP = p + 0.1*sin(2*pi*(F/Fs)*n)' + 0.2*sin(2*pi*(32/Fs)*n)' + 0.1*cos(2*pi*(12/Fs)*n)' + 0.2*sin(2*pi*(1/Fs)*n)' + 0.1*cos(2*pi*(30/Fs)*n)';
 %REAL_COMP = ones(CONVERSION_FORMAT, 1);
 IMG_COMP = zeros(CONVERSION_FORMAT, 1);
 SIG = REAL_COMP + 1i*IMG_COMP;
@@ -18,18 +22,19 @@ SIG = REAL_COMP + 1i*IMG_COMP;
 % "FIXT"            \/
 % "FIXT_SAT"        \/
 % "FIXT_SHIFT"      \/
-DATA_FORMAT = "FIXT_SHIFT";
+% "FIXT_EX"         \/
+DATA_FORMAT = "FIXT_EX";
 
 [REAL_PART, IMAG_PART] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT);
 
-DATA_FORMAT = "DOUBLE_SHIFT";
+DATA_FORMAT = "FIXT_SHIFT";
 
-%[REAL_PART_D, IMAG_PART_D] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT);
+[REAL_PART_D, IMAG_PART_D] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT);
 
 
-my_fft = REAL_PART + 1i*IMAG_PART;
-true_fft = fft(SIG, CONVERSION_FORMAT);
-%true_fft = REAL_PART_D + 1i*IMAG_PART_D;
+my_fft = double(REAL_PART + 1i*IMAG_PART);
+%true_fft = fft(SIG, CONVERSION_FORMAT);
+true_fft = double(REAL_PART_D + 1i*IMAG_PART_D);
 
 
 %% plot grafs

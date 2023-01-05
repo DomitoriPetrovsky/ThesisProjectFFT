@@ -1,19 +1,26 @@
 %% top_FFT
 % CONVERSION_FORMAT  =  2^n, n -  Natural number
-% DATA_FORMAT =  "DOUBLE", "FIXT"
-%
+% DATA_FORMAT:
+%   "DOUBLE"          \/
+%   "DOUBLE_SHIFT"    \/
+%   "FIXT"            \/
+%   "FIXT_SAT"        \/
+%   "FIXT_SHIFT"      \/
+%   "FIXT_EX"        \/
 %
 function [REAL_PART, IMAG_PART] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT)
 
 LAYER_NUM = log2(CONVERSION_FORMAT);
 BUT_NUM = CONVERSION_FORMAT/2;
 
-WL = 16;
-FL = 15;
+ExWL = 25;
+WL   = 16;
+FL   = 15;
 
 DATA_F = "";
 SHIFT = 0;
-T = 0;
+T_D = 0;
+T_W = 0;
 F = 0;
 
 if DATA_FORMAT == "DOUBLE"
@@ -25,7 +32,8 @@ else
     else
         if DATA_FORMAT == "FIXT"
             DATA_F = "FIXT";
-            T = numerictype (1, WL, FL);
+            T_W = numerictype (1, WL, FL);
+            T_D = T_W;
             F = fimath( 'OverflowAction','Wrap', ...
                         'ProductMode', 'SpecifyPrecision', ...
                         'ProductWordLength', WL, ...
@@ -36,7 +44,8 @@ else
         else 
             if DATA_FORMAT == "FIXT_SAT"
                 DATA_F = "FIXT";
-                T = numerictype (1, WL, FL);
+                T_W = numerictype (1, WL, FL);
+                T_D = T_W;
                 F = fimath( 'OverflowAction','Saturate', ...
                             'ProductMode', 'SpecifyPrecision', ...
                             'ProductWordLength', WL, ...
@@ -49,7 +58,8 @@ else
                 if DATA_FORMAT == "FIXT_SHIFT"
                     DATA_F = "FIXT";
                     SHIFT = 1;
-                    T = numerictype (1, WL, FL);
+                    T_W = numerictype (1, WL, FL);
+                    T_D = T_W;
                     F = fimath( 'OverflowAction','Saturate', ...
                                 'ProductMode', 'SpecifyPrecision', ...
                                 'ProductWordLength', WL, ...
@@ -58,8 +68,21 @@ else
                                 'SumWordLength', WL, ...
                                 'SumFractionLength',FL);
                 else 
-                    disp("TOP_FFT error! Check DATA_FORMAT param!!!");
-                    return;
+                    if DATA_FORMAT == "FIXT_EX"
+                        DATA_F = "FIXT";
+                        T_W = numerictype (1, WL, FL);
+                        T_D = numerictype (1, ExWL, FL);
+                        F = fimath( 'OverflowAction','Saturate', ...
+                                    'ProductMode', 'SpecifyPrecision', ...
+                                    'ProductWordLength', ExWL, ...
+                                    'ProductFractionLength', FL, ...
+                                    'SumMode','SpecifyPrecision', ...
+                                    'SumWordLength', ExWL, ...
+                                    'SumFractionLength',FL);
+                    else
+                        disp("TOP_FFT error! Check DATA_FORMAT param!!!");
+                        return;
+                    end
                 end
             end
         end    
@@ -67,9 +90,9 @@ else
 end
 
 
-
-w_i = -sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "SIN", DATA_F, F, T);
-w_r =  sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "COS", DATA_F, F, T);
+% generate 
+w_i = -sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "SIN", DATA_F, F, T_W);
+w_r =  sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "COS", DATA_F, F, T_W);
 
 DEBUG_LAYERS = zeros(CONVERSION_FORMAT , LAYER_NUM);
 RAM_r = zeros(CONVERSION_FORMAT , 1);
@@ -77,13 +100,13 @@ RAM_i = zeros(CONVERSION_FORMAT , 1);
 
 
 if DATA_F == "FIXT"
-    RAM_r = fi(RAM_r, T, F);
-    RAM_i = fi(RAM_i, T, F);
-    DEBUG_LAYERS_i = fi(DEBUG_LAYERS, T, F);
-    DEBUG_LAYERS_r = fi(DEBUG_LAYERS, T, F);
+    RAM_r = fi(RAM_r, T_D, F);
+    RAM_i = fi(RAM_i, T_D, F);
+    DEBUG_LAYERS_i = fi(DEBUG_LAYERS, T_D, F);
+    DEBUG_LAYERS_r = fi(DEBUG_LAYERS, T_D, F);
     
-    REAL_COMP = fi(REAL_COMP, T, F);
-    IMG_COMP = fi(IMG_COMP, T, F);
+    REAL_COMP = fi(REAL_COMP, T_D, F);
+    IMG_COMP = fi(IMG_COMP, T_D, F);
 
 end
 
@@ -136,6 +159,12 @@ for lay = 1:LAYER_NUM
     end
 end
 
-REAL_PART = RAM_r;
-IMAG_PART = RAM_i;
+%if DATA_F == "FIXT"
+%    REAL_PART = fi(RAM_r, T_W);
+%    IMAG_PART = fi(RAM_i, T_W);
+%else 
+    REAL_PART = RAM_r;
+    IMAG_PART = RAM_i;
+%end
+
 end
