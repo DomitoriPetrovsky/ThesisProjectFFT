@@ -9,13 +9,12 @@ module w_address_gen_unit #(
 );
 
 	reg [AWL-1:0] addr;
-	reg [AWL-1:0] next_addr;
 
 	reg [AWL-1:0] lay;
 
 	wire [AWL-1:0] mask = {1'b0, {(AWL-1){1'b1}}};
 
-	assign W_ADDR = addr && mask;
+	assign W_ADDR = addr & mask;
 
 	always @(posedge CLK) begin
 		if (RST) begin 

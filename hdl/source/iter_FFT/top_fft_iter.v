@@ -1,7 +1,11 @@
 module top_fft_iter #(
 	parameter IWL = 32,
+	parameter inverse = 0,
 	parameter INIT_FILE = ""
 )(	
+
+	input 	wr_res,
+
 	input 	wire					CLK,
 	input 	wire					RST,
 	input 	wire					EN,
@@ -19,7 +23,7 @@ module top_fft_iter #(
 
 	localparam AWL = 5;
 	localparam DWL = 16;
-	localparam WWL = 4;
+	localparam WWL = 5;
 
 	//
 	wire [IWL-1:0] a_value;
@@ -44,6 +48,13 @@ module top_fft_iter #(
 
 	wire in_RAM_wr;
 	//
+
+	wire [DWL-1:0] cos_value;
+	wire [DWL-1:0] sin_value;
+
+	wire [DWL-1:0] w_value_i;
+	wire [DWL-1:0] w_value_r;
+
 	reg [IWL-1:0] w_value;
 	wire [WWL-1:0] w_addr;
 
@@ -109,12 +120,38 @@ module top_fft_iter #(
 		.W_ADDR		(w_addr			)
 	);
 
+	sin_table_unit #(
+		.DWL		(DWL			),
+		.DFL		(DWL-1			),
+		.AWL		(WWL-1			),
+		.table_division(2			)) 
+	sin_table (
+		.i_ADDR		(w_addr[WWL-2:0]),
+		.o_DATA		(sin_value		)
+	);
+
+
+	sin_table_unit #(
+		.DWL		(DWL			),
+		.DFL		(DWL-1			),
+		.AWL		(WWL-1			),
+		.COS		(1				),
+		.table_division(2			)) 
+	cos_table (
+		.i_ADDR		(w_addr[WWL-2:0]),
+		.o_DATA		(cos_value		)
+	);
+
+	assign w_value_i = (inverse)? sin_value: -sin_value;
+	assign w_value_r = cos_value;
+
+
 	always @(posedge CLK) begin
 		if (RST) begin
 			w_value <= 0;
 		end else begin
-			if (wr) begin
-				w_value <= w_value + 1;
+			if (~addr_en) begin
+				w_value <= {w_value_r, w_value_i};
 			end
 		end
 	end
@@ -137,8 +174,12 @@ module top_fft_iter #(
 
 	dual_port_RAM_unit #(
 		.DWL		(IWL			),
+		.DEBUG_RES_FILE_NAME ("res.txt"),
 		.AWL		(AWL			)) 
 	workt_ram_unit (
+
+		.debug_write_res_to_file(wr_res),
+
 		.CLK_A		(CLK			),
 		.WrE_A		(wr				),
 		.EN_A		(EN				),

@@ -1,19 +1,19 @@
 module complex_butterfly_simple #(
 	parameter N = 16
 )(
-	input wire 			[N-1:0] i_Wre, i_Wim,
-	input wire 			[N-1:0] i_Bre, i_Bim,
+	input wire signed	[N-1:0] i_Wre, i_Wim,
+	input wire signed	[N-1:0] i_Bre, i_Bim,
 	input wire signed 	[N-1:0] i_Are, i_Aim,
-	output reg 			[N-1:0] o_X_re, o_X_im,
-	output reg 			[N-1:0] o_Y_re, o_Y_im
+	output reg signed	[N-1:0] o_X_re, o_X_im,
+	output reg signed	[N-1:0] o_Y_re, o_Y_im
 );
 
-reg [2*N-1:0] Wre_Bre;
-reg [2*N-1:0] Wim_Bim;
-reg [2*N-1:0] Wre_Bim;
-reg [2*N-1:0] Wim_Bre;
+reg signed [2*N-1:0] Wre_Bre;
+reg signed [2*N-1:0] Wim_Bim;
+reg signed [2*N-1:0] Wre_Bim;
+reg signed [2*N-1:0] Wim_Bre;
 
-reg [N-1:0] BWre, BWim;
+reg signed [N-1:0] BWre, BWim;
 
 	always@(*) begin
 		Wre_Bre <= i_Wre * i_Bre;
@@ -23,8 +23,8 @@ reg [N-1:0] BWre, BWim;
 	end
 
 	always@(*) begin
-		BWre <= Wre_Bre[2*N-1:N+1] - Wim_Bim[2*N-1:N+1];
-		BWim <= Wre_Bim[2*N-1:N+1] + Wim_Bre[2*N-1:N+1];
+		BWre <= Wre_Bre[2*N-1:N] - Wim_Bim[2*N-1:N];
+		BWim <= Wre_Bim[2*N-1:N] + Wim_Bre[2*N-1:N];
 	end
 
 	always@(*) begin

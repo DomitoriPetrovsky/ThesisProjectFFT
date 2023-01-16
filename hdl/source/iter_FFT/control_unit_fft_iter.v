@@ -31,8 +31,13 @@ module control_unit_fft_iter #(
 	reg [FSM_BITNESS-1:0]state;
 	reg [FSM_BITNESS-1:0]next_state;
 
-	reg [ButtWL-1:0]butt_count;
-	reg [LayWL-1:0]lay_count;
+	reg [ButtWL+LayWL-1:0] counter;
+
+	wire [ButtWL-1:0]butt_count;
+	wire [LayWL-1:0]lay_count;
+
+	assign butt_count = counter[ButtWL-1:0];
+	assign lay_count = counter[ButtWL+LayWL-1:ButtWL];
 
 	wire tmp_first;
 	wire tmp_end;
@@ -40,17 +45,32 @@ module control_unit_fft_iter #(
 	wire tmp_en;
 	wire tmp_wr;
 
+	reg tmp_add_en;
+
 	wire tmp_lay_en;
 	wire tmp_last_lay;
 
-	assign LAY_EN	= tmp_lay_en;
-	assign ADDR_EN	= tmp_en;
+	assign LAY_EN	= tmp_lay_en & tmp_add_en;//& tmp_wr;
+	assign ADDR_EN	= tmp_add_en;//tmp_en;
 	assign Wr		= tmp_wr;
 	assign FIRST	= tmp_first;
 
+	always @(negedge CLK) begin
+		if(RST) begin
+			tmp_add_en <= 0;
+		end else begin 
+			if((state == FSM_STATE_FIRST_WR) || (state == FSM_STATE_OTHERS_WR)) begin
+				tmp_add_en <= 1'b1;
+			end else begin
+				tmp_add_en <= 1'b0;
+			end
+		end
+	end
+	
+
 	assign tmp_wr = ((state == FSM_STATE_FIRST_WR) || (state == FSM_STATE_OTHERS_WR))? 1 : 0;
 	assign tmp_en = (state != FSM_STATE_WAIT)? !tmp_wr : 0;
-	assign tmp_first = ((state == FSM_STATE_FIRST_WR) || (state == FSM_STATE_FIRST_R))? 1 : 0;
+	assign tmp_first = ((state == FSM_STATE_FIRST_WR) || (state == FSM_STATE_FIRST_R))? 1 : 0;//(lay_count == ({LayWL{1'b0}}))? 1 : 0;
 
 	always @(*) begin
 		case (state)
@@ -84,32 +104,22 @@ module control_unit_fft_iter #(
 		endcase
 	end
 
-	always @(posedge CLK) begin
+	always @(posedge CLK) begin //posedge
 		if(RST) begin 
-			butt_count <= 0;
+			counter <= 0;
 		end else begin 
 			if (tmp_en) begin
-				butt_count <= butt_count + 1;
+				counter <= counter + 1;
 			end
 		end
 	end
 
-	assign tmp_lay_en = ((butt_count == {ButtWL{1'b0}}) && (state != FSM_STATE_WAIT))? 1 : 0;
+	assign tmp_lay_en = ((butt_count == {ButtWL{1'b0}}) && (state != FSM_STATE_WAIT) && (lay_count != {ButtWL{1'b0}}))? 1 : 0;
 
 
-	always @(posedge CLK) begin
-		if(RST) begin 
-			lay_count <= 0;
-		end else begin 
-			if (tmp_lay_en && tmp_en) begin
-				lay_count <= lay_count + 1;
-			end
-		end
-	end
+	assign tmp_last_lay = (lay_count == (LAYERS-1))? 1 : 0;
 
-	assign tmp_last_lay = (lay_count == LAYERS)? 1 : 0;
-
-	assign tmp_end = tmp_lay_en & tmp_last_lay;
+	assign tmp_end = (lay_count == (LAYERS) && (butt_count == {ButtWL{1'b0}}))? 1 : 0; //tmp_lay_en & tmp_last_lay;
 
 	always @(posedge CLK) begin
 		if(RST) begin 
