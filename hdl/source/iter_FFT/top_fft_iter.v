@@ -1,7 +1,10 @@
 module top_fft_iter #(
 	parameter IWL = 32,
+	parameter IDWL = 16,
+	parameter AWL = 5,
 	parameter inverse = 0,
-	parameter INIT_FILE = ""
+	parameter INIT_FILE = "",
+	parameter DEBUG_RES_FILE_NAME = "default_res.txt"
 )(	
 
 	input 	wr_res,
@@ -21,13 +24,16 @@ module top_fft_iter #(
 	output wire						o_RAM_BLOCK
 );
 
-	localparam AWL = 5;
-	localparam DWL = 16;
-	localparam WWL = 5;
+	localparam DWL = IDWL;
+	localparam W_DWL = IDWL;
+	localparam WWL = AWL;
 
 	//
 	wire [IWL-1:0] a_value;
 	wire [IWL-1:0] b_value;
+
+	reg  [IWL-1:0] reg_a_value;
+	reg  [IWL-1:0] reg_b_value;
 
 	wire [IWL-1:0] x_value;
 	wire [IWL-1:0] y_value;
@@ -36,6 +42,16 @@ module top_fft_iter #(
 	wire [AWL-1:0] a_addr;
 	wire [AWL-1:0] b_addr;
 	
+	reg  [AWL-1:0] wr_a_addr;
+	reg  [AWL-1:0] wr_b_addr;
+
+	reg  [AWL-1:0] wr_tmp_a_addr;
+	reg  [AWL-1:0] wr_tmp_b_addr;
+
+
+	wire [AWL-1:0] r_a_addr;
+	wire [AWL-1:0] r_b_addr;
+
 	wire [IWL-1:0] RAM_a_value;
 	wire [IWL-1:0] RAM_b_value;
 
@@ -52,10 +68,10 @@ module top_fft_iter #(
 	wire [DWL-1:0] cos_value;
 	wire [DWL-1:0] sin_value;
 
-	wire [DWL-1:0] w_value_i;
-	wire [DWL-1:0] w_value_r;
+	wire [W_DWL-1:0] w_value_i;
+	wire [W_DWL-1:0] w_value_r;
 
-	reg [IWL-1:0] w_value;
+	reg  [W_DWL*2-1:0] w_value;
 	wire [WWL-1:0] w_addr;
 
 	//
@@ -63,18 +79,49 @@ module top_fft_iter #(
 	wire lay_en;
 	wire wr;
 	wire addr_en;
+	wire but_strob;
+	wire strb_out;
 
+	assign a_value			= (first == 1)	? in_RAM_a_value	: RAM_a_value;
+	assign b_value			= (first == 1)	? in_RAM_b_value	: RAM_b_value;
 
-	assign a_value			= (first == 1)? in_RAM_a_value	: RAM_a_value;
-	assign b_value			= (first == 1)? in_RAM_b_value	: RAM_b_value;
+	assign a_addr			= (wr == 1)		? wr_a_addr			: r_a_addr;
+	assign b_addr			= (wr == 1)		? wr_b_addr			: r_b_addr;
 
-	assign in_RAM_wr 		= (first == 1)? 0 				: i_RAM_Wr;
+	assign w_value_i 		= (inverse)		? sin_value			: -sin_value;
+	assign w_value_r 		= 				cos_value;
 
-	assign in_RAM_a_addr 	= (first == 1)? a_addr 			: i_A_ADDR;
-	assign in_RAM_b_addr 	= (first == 1)? b_addr 			: i_B_ADDR;
+	assign in_RAM_wr 		= (first == 1)	? 0 				: i_RAM_Wr;
+
+	assign in_RAM_a_addr 	= (first == 1)	? r_a_addr 			: i_A_ADDR;
+	assign in_RAM_b_addr 	= (first == 1)	? r_b_addr 			: i_B_ADDR;
 
 	assign o_RAM_BLOCK		= first;
 	
+	always @(posedge CLK) begin
+		if (but_strob) begin
+			wr_tmp_a_addr <= r_a_addr;
+			wr_tmp_b_addr <= r_b_addr;
+
+			wr_a_addr <= wr_tmp_a_addr; 
+			wr_b_addr <= wr_tmp_b_addr;
+		end
+	end
+
+	always @(posedge CLK) begin
+		if (but_strob) begin
+			reg_a_value <= a_value; 
+			reg_b_value <= b_value;
+		end
+	end
+
+	always @(posedge CLK) begin
+		if (but_strob) begin
+			w_value <= {w_value_r, w_value_i};
+		end
+	end
+
+
 	dual_port_RAM_unit #(
 		.DWL		(IWL			),
 		.AWL		(AWL			),
@@ -105,8 +152,8 @@ module top_fft_iter #(
 		.RST		(RST			),
 		.EN			(addr_en		),
 		.LAY_EN		(lay_en			),
-		.A_ADDR		(a_addr			),
-		.B_ADDR		(b_addr			)
+		.A_ADDR		(r_a_addr		),
+		.B_ADDR		(r_b_addr		)
 	);
 
 
@@ -142,39 +189,39 @@ module top_fft_iter #(
 		.o_DATA		(cos_value		)
 	);
 
-	assign w_value_i = (inverse)? sin_value: -sin_value;
-	assign w_value_r = cos_value;
 
-
-	always @(posedge CLK) begin
-		if (RST) begin
-			w_value <= 0;
-		end else begin
-			if (~addr_en) begin
-				w_value <= {w_value_r, w_value_i};
-			end
-		end
-	end
-
-
-	complex_butterfly_simple #(
-		.N			(DWL			))
-	butterfly(
-		.i_Wre		(w_value	[IWL-1:DWL]	), 
-		.i_Wim		(w_value	[DWL-1:0]	),
-		.i_Bre		(b_value	[IWL-1:DWL]	), 
-		.i_Bim		(b_value	[DWL-1:0]	),
-		.i_Are		(a_value	[IWL-1:DWL]	), 
-		.i_Aim		(a_value	[DWL-1:0]	),
-		.o_X_re		(x_value	[IWL-1:DWL]	),
-		.o_X_im		(x_value	[DWL-1:0]	),
-		.o_Y_re		(y_value	[IWL-1:DWL]	),
-		.o_Y_im		(y_value	[DWL-1:0]	)
+	complex_butterfly_iter #(
+		.IWL1			(DWL					),
+		.IWL2			(W_DWL					),
+		.AWL			(DWL+1					),
+		.OWL			(DWL					),
+		.CONSTANT_SHIFT	(1'b1					)) 
+		butterfly(
+		.clk 			(CLK 					),	        
+		.rst         	(RST         			),
+		.strb_in 		(but_strob 				),	  
+		// B port 
+		.din1_re 		(b_value	[IWL-1:DWL]	),	
+		.din1_im     	(b_value	[DWL-1:0]   ),
+		// W port
+		.din2_re     	(w_value	[W_DWL*2-1:W_DWL] ),  
+		.din2_im     	(w_value	[W_DWL-1:0]   ),
+		//  A port
+		.din3_re		(a_value	[IWL-1:DWL]	),  
+		.din3_im		(a_value	[DWL-1:0]	),
+		// X port
+		.dout1_re     	(x_value	[IWL-1:DWL]	),
+		.dout1_im     	(x_value	[DWL-1:0]   ),
+		// Y port
+		.dout2_re     	(y_value	[IWL-1:DWL] ),
+		.dout2_im     	(y_value	[DWL-1:0]   ),
+		
+		.strb_out    	(strb_out    			)
 	);
 
 	dual_port_RAM_unit #(
 		.DWL		(IWL			),
-		.DEBUG_RES_FILE_NAME ("res.txt"),
+		.DEBUG_RES_FILE_NAME (DEBUG_RES_FILE_NAME),
 		.AWL		(AWL			)) 
 	workt_ram_unit (
 
@@ -208,7 +255,8 @@ module top_fft_iter #(
 		.CLK		(CLK			),
 		.RST		(RST			),
 		.EN			(EN				),
-		.START		(START			),	
+		.START		(START			),
+		.BUT_STROB	(but_strob		),
 		.LAY_EN		(lay_en			),
 		.ADDR_EN	(addr_en		),
 		.Wr			(wr				),

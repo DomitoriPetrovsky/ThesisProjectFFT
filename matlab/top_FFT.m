@@ -95,6 +95,9 @@ w_i = -sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "SIN", DATA_F, F, T_W);
 w_r =  sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "COS", DATA_F, F, T_W);
 
 DEBUG_LAYERS = zeros(CONVERSION_FORMAT , LAYER_NUM);
+
+DEBUG_W_VAL = zeros(BUT_NUM , LAYER_NUM);
+
 RAM_r = zeros(CONVERSION_FORMAT , 1);
 RAM_i = zeros(CONVERSION_FORMAT , 1);
 
@@ -102,12 +105,23 @@ RAM_i = zeros(CONVERSION_FORMAT , 1);
 if DATA_F == "FIXT"
     RAM_r = fi(RAM_r, T_D, F);
     RAM_i = fi(RAM_i, T_D, F);
+    
     DEBUG_LAYERS_i = fi(DEBUG_LAYERS, T_D, F);
     DEBUG_LAYERS_r = fi(DEBUG_LAYERS, T_D, F);
     
+    DEBUG_W_VAL_i = fi(DEBUG_W_VAL, T_W, F);
+    DEBUG_W_VAL_r = fi(DEBUG_W_VAL, T_W, F);
+    
+    
     REAL_COMP = fi(REAL_COMP, T_D, F);
     IMG_COMP = fi(IMG_COMP, T_D, F);
+    
+    bit_rev_address = 1;
+    FILE_NAME = "cur_in_val.txt";
+    input_file_gen(REAL_COMP, IMG_COMP, bit_rev_address, FILE_NAME);
 
+    
+    
 end
 
 lp = 1;
@@ -124,6 +138,10 @@ for lay = 1:LAYER_NUM
         
         [picup_addr_A, picup_addr_B, dest_addr_X, dest_addr_Y, add_AB] = address_gen(lay, add_AB, CONVERSION_FORMAT);
 
+        %if( (dest_addr_X == 29 || dest_addr_X == 31) && lay == 2)
+        %   disp("point") 
+        %end
+        
         
         if lay == 1 
             A_r = REAL_COMP(picup_addr_A); 
@@ -138,7 +156,14 @@ for lay = 1:LAYER_NUM
         end
             
         W_r = w_r(W_address);
-        W_i = w_i(W_address);    
+        W_i = w_i(W_address);
+        
+        if DATA_F == "FIXT"
+            DEBUG_W_VAL_r(but, lay) = W_r;
+            DEBUG_W_VAL_i(but, lay) = W_i;
+        else
+            DEBUG_W_VAL(but, lay) = W_r + 1i*W_i;
+        end
             
         [W_address, add_w] = w_address_gen(lay, CONVERSION_FORMAT, add_w);
 

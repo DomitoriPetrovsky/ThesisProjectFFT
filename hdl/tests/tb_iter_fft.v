@@ -4,19 +4,25 @@ module tb_iter_fft;
 	parameter DWL = 16;
 	parameter AWL = 5;
 	parameter INIT_FILE = "C:/Users/user1/Documents/MATLAB/function/data.txt";
-
+	parameter DEBUG_RES_FILE_NAME = "../matlab/res.txt";
 	reg 					CLK;
 	reg 					WrE;
 	reg 					EN;	
+
+	reg wr_res;
 
 	reg 					RST;
 	reg 					START;
 	wire 					block;
 
-	 top_fft_iter #(
+	top_fft_iter #(
 		.IWL(32),
-		.INIT_FILE (INIT_FILE)
+		.INIT_FILE (INIT_FILE),
+		.DEBUG_RES_FILE_NAME(DEBUG_RES_FILE_NAME)
 	)fft(	
+		.wr_res(wr_res),
+
+
 		.CLK			(CLK),
 		.RST			(RST),
 		.EN				(EN),
@@ -31,16 +37,9 @@ module tb_iter_fft;
 
 	always #5 CLK = ~CLK;
 
-	always @( posedge CLK) begin
-		if (!RST) begin
-			WrE <=! WrE;
-		end
-	end
-
-
 	initial begin 
 
-		{CLK, EN, START} <= 0;
+		{CLK, EN, START, wr_res} <= 0;
 		WrE <= 1;
 		RST <= 1;
 		#20 
@@ -50,6 +49,7 @@ module tb_iter_fft;
 		START <= 1;
 		#20 START <= 0;
 		
+		#4890 wr_res <= 1;
 	end 
     
 endmodule 		
