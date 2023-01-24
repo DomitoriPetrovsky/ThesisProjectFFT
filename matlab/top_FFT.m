@@ -138,7 +138,7 @@ for lay = 1:LAYER_NUM
         
         [picup_addr_A, picup_addr_B, dest_addr_X, dest_addr_Y, add_AB] = address_gen(lay, add_AB, CONVERSION_FORMAT);
 
-        %if( (dest_addr_X == 29 || dest_addr_X == 31) && lay == 2)
+        %if( (dest_addr_X == 8 || dest_addr_X == 9) && lay == 1)
         %   disp("point") 
         %end
         

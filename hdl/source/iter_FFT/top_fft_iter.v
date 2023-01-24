@@ -2,6 +2,7 @@ module top_fft_iter #(
 	parameter IWL = 32,
 	parameter IDWL = 16,
 	parameter AWL = 5,
+	parameter LayWL = 4,
 	parameter inverse = 0,
 	parameter INIT_FILE = "",
 	parameter DEBUG_RES_FILE_NAME = "default_res.txt"
@@ -27,6 +28,10 @@ module top_fft_iter #(
 	localparam DWL = IDWL;
 	localparam W_DWL = IDWL;
 	localparam WWL = AWL;
+
+
+	//parameter LayWL = $rtoi($cail($log2(AWL)));
+
 
 	//
 	wire [IWL-1:0] a_value;
@@ -71,7 +76,7 @@ module top_fft_iter #(
 	wire [W_DWL-1:0] w_value_i;
 	wire [W_DWL-1:0] w_value_r;
 
-	reg  [W_DWL*2-1:0] w_value;
+	reg  [W_DWL*2-1:0] reg_w_value;
 	wire [WWL-1:0] w_addr;
 
 	//
@@ -117,7 +122,7 @@ module top_fft_iter #(
 
 	always @(posedge CLK) begin
 		if (but_strob) begin
-			w_value <= {w_value_r, w_value_i};
+			reg_w_value <= {w_value_r, w_value_i};
 		end
 	end
 
@@ -191,32 +196,32 @@ module top_fft_iter #(
 
 
 	complex_butterfly_iter #(
-		.IWL1			(DWL					),
-		.IWL2			(W_DWL					),
-		.AWL			(DWL+1					),
-		.OWL			(DWL					),
-		.CONSTANT_SHIFT	(1'b1					)) 
+		.IWL1			(DWL								),
+		.IWL2			(W_DWL								),
+		.AWL			(DWL+1								),
+		.OWL			(DWL								),
+		.CONSTANT_SHIFT	(1'b1								)) 
 		butterfly(
-		.clk 			(CLK 					),	        
-		.rst         	(RST         			),
-		.strb_in 		(but_strob 				),	  
+		.clk 			(CLK 								),	        
+		.rst         	(RST         						),
+		.strb_in 		(but_strob 							),	  
 		// B port 
-		.din1_re 		(b_value	[IWL-1:DWL]	),	
-		.din1_im     	(b_value	[DWL-1:0]   ),
+		.din1_re 		(reg_b_value	[IWL-1:DWL]			),	
+		.din1_im     	(reg_b_value	[DWL-1:0]   		),
 		// W port
-		.din2_re     	(w_value	[W_DWL*2-1:W_DWL] ),  
-		.din2_im     	(w_value	[W_DWL-1:0]   ),
+		.din2_re     	(reg_w_value	[W_DWL*2-1:W_DWL] 	),  
+		.din2_im     	(reg_w_value	[W_DWL-1:0]   		),
 		//  A port
-		.din3_re		(a_value	[IWL-1:DWL]	),  
-		.din3_im		(a_value	[DWL-1:0]	),
+		.din3_re		(reg_a_value	[IWL-1:DWL]			),  
+		.din3_im		(reg_a_value	[DWL-1:0]			),
 		// X port
-		.dout1_re     	(x_value	[IWL-1:DWL]	),
-		.dout1_im     	(x_value	[DWL-1:0]   ),
+		.dout1_re     	(x_value		[IWL-1:DWL]			),
+		.dout1_im     	(x_value		[DWL-1:0]   		),
 		// Y port
-		.dout2_re     	(y_value	[IWL-1:DWL] ),
-		.dout2_im     	(y_value	[DWL-1:0]   ),
+		.dout2_re     	(y_value		[IWL-1:DWL] 		),
+		.dout2_im     	(y_value		[DWL-1:0]   		),
 		
-		.strb_out    	(strb_out    			)
+		.strb_out    	(strb_out    						)
 	);
 
 	dual_port_RAM_unit #(
@@ -247,10 +252,10 @@ module top_fft_iter #(
 
 
 	control_unit_fft_iter #(
-		.LAYERS 	(5				),
-		.BUTTERFLYES(16				),
-		.LayWL 		(3				),
-		.ButtWL 	(4				))	
+		.LAYERS 	(AWL			),
+		.BUTTERFLYES(2^(AWL-1)		),
+		.LayWL 		(LayWL			),
+		.ButtWL 	(AWL-1			))	
 	control_unit(
 		.CLK		(CLK			),
 		.RST		(RST			),

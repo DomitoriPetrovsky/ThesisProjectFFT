@@ -4,7 +4,7 @@ disp("Create file " + FILE_NAME);
 len = numel(re);
 bit_len =  round(log2(len));
 
-addr = 1:len;
+addr = 0:len-1;
 
 if bit_rev_address == 1
     tmp = fi(addr, 0, bit_len);
@@ -20,7 +20,7 @@ if bit_rev_address == 1
     end
     addrs = int32(tmp) + 1;
 else 
-    addrs = addr;
+    addrs = addr + 1;
 end
     
 FILE_ID = fopen(FILE_NAME, 'w');
