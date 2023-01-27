@@ -1,9 +1,9 @@
 module control_unit_fft_iter #(
-	parameter LAYERS = 5,
-	parameter BUTTERFLYES = 16,
-
-	parameter LayWL = 3,
-	parameter ButtWL = 4
+	parameter LAYERS 		= 5,
+	parameter BUTTERFLYES 	= 16,
+	parameter LayWL 		= 3,
+	parameter ButtWL 		= 4,
+	parameter BUT_MUL_COUNT = 1
 )(
 	input 	wire					CLK,
 	input 	wire					RST,
@@ -20,14 +20,13 @@ module control_unit_fft_iter #(
 );
 	localparam FSM_BITNESS = 3;
 
-	localparam FSM_STATE_WAIT 		= 0;
-	localparam FSM_STATE_R 			= 1;
-	localparam FSM_STATE_WR 		= 2;
-	localparam FSM_STATE_ADDRESS 	= 3;
-	localparam FSM_STATE_DELAY_1 	= 4;
-	localparam FSM_STATE_DELAY_2 	= 5;
-	localparam FSM_STATE_DELAY_3 	= 6;
-	localparam FSM_STATE_STROB	 	= 7;
+	localparam FSM_STATE_WAIT 		= 0; // 3'b000
+	localparam FSM_STATE_R 			= 4; // 3'b100
+	localparam FSM_STATE_STROB	 	= 5; // 3'b101
+	localparam FSM_STATE_ADDRgen_WR = 1; // 3'b001
+	localparam FSM_STATE_DELAY_1 	= 3; // 3'b011
+	localparam FSM_STATE_DELAY_2 	= 2; // 3'b010
+	
 	
 	reg 	[FSM_BITNESS-1:0]	state;
 	reg 	[FSM_BITNESS-1:0]	next_state;
@@ -51,9 +50,9 @@ module control_unit_fft_iter #(
 	wire 						tmp_first;
 
 
-	assign tmp_but_strob 	= 	(state == FSM_STATE_STROB)		? 1'b1 : 1'b0;//(state == FSM_STATE_R)			? 1'b1 : 1'b0;
-	assign addr_strob 		=	(state == FSM_STATE_ADDRESS)	? 1'b1 : 1'b0;
-	assign tmp_wr 			= 	(state == FSM_STATE_WR)			? 1'b1 : 1'b0;
+	assign tmp_but_strob 	= 	(state == FSM_STATE_STROB)		? 1'b1 : 1'b0;
+	assign addr_strob 		=	(state == FSM_STATE_ADDRgen_WR)	? 1'b1 : 1'b0; 
+	assign tmp_wr 			= 	(state == FSM_STATE_ADDRgen_WR)	? 1'b1 : 1'b0;
 	assign tmp_count_rst 	= 	(state == FSM_STATE_WAIT)		? 1'b1 : 1'b0;
 
 	assign tmp_first 		= 	((lay_count == {LayWL{1'b0}}) 	&& 
@@ -63,7 +62,7 @@ module control_unit_fft_iter #(
 								(lay_count == LAYERS))			? 1'b1 : 1'b0;
 
 	assign tmp_lay_en 		= 	((butt_count == {ButtWL{1'b0}}) && 
-								(state == FSM_STATE_ADDRESS)    && 
+								(state == FSM_STATE_ADDRgen_WR) && 
 								(lay_count != {LayWL{1'b0}}))	? 1'b1 : 1'b0;
 	
 								
@@ -76,40 +75,81 @@ module control_unit_fft_iter #(
 	assign BUT_STROB 		= 	tmp_but_strob;
 	assign ADDR_EN 			= 	addr_strob;
 
-
-	always @(*) begin
-		case (state)
-			FSM_STATE_WAIT:
-				if(START == 1) begin
-					next_state <= FSM_STATE_R;
-				end else begin
-					next_state <= state;
-				end
-			
-			FSM_STATE_R:
-				next_state <= FSM_STATE_STROB;
-
-			FSM_STATE_STROB:
-				next_state <= FSM_STATE_DELAY_2;
-
-			FSM_STATE_DELAY_2:
-				next_state <= FSM_STATE_WR;
-			
-			FSM_STATE_WR:
-				if(tmp_end == 1) begin
-					next_state <= FSM_STATE_WAIT;
-				end else begin
-					next_state <= FSM_STATE_DELAY_3;
-				end
-
-			FSM_STATE_DELAY_3:
-				next_state <= FSM_STATE_ADDRESS;
+	generate
+		if (BUT_MUL_COUNT == 1) begin
+			always @(*) begin
+				case (state)
+					FSM_STATE_WAIT:
+						if(START == 1) begin
+							next_state <= FSM_STATE_R;
+						end else begin
+							next_state <= state;
+						end
+					FSM_STATE_R:
+						next_state <= FSM_STATE_STROB;
+					FSM_STATE_STROB:
+						next_state <= FSM_STATE_DELAY_1;
+					FSM_STATE_DELAY_1:
+						next_state <= FSM_STATE_ADDRgen_WR;
+					FSM_STATE_ADDRgen_WR:
+						if(tmp_end == 1) begin
+							next_state <= FSM_STATE_WAIT;
+						end else begin
+							next_state <= FSM_STATE_DELAY_2;
+						end
+					FSM_STATE_DELAY_2:
+						next_state <= FSM_STATE_R;
+				endcase
+			end
+		end
+		if (BUT_MUL_COUNT == 2) begin
+			always @(*) begin
+				case (state)
+					FSM_STATE_WAIT:
+						if(START == 1) begin
+							next_state <= FSM_STATE_R;
+						end else begin
+							next_state <= state;
+						end
+					FSM_STATE_R:
+						next_state <= FSM_STATE_STROB;
+					FSM_STATE_STROB:
+						next_state <= FSM_STATE_DELAY_1;
+					FSM_STATE_DELAY_1:
+						next_state <= FSM_STATE_ADDRgen_WR;
+					FSM_STATE_ADDRgen_WR:
+						if(tmp_end == 1) begin
+							next_state <= FSM_STATE_WAIT;
+						end else begin
+							next_state <= FSM_STATE_R;
+						end
+				endcase
+			end
+		end 
+		if (BUT_MUL_COUNT == 4) begin
+			always @(*) begin
+				case (state)
+					FSM_STATE_WAIT:
+						if(START == 1) begin
+							next_state <= FSM_STATE_R;
+						end else begin
+							next_state <= state;
+						end
+					FSM_STATE_R:
+						next_state <= FSM_STATE_STROB;
+					FSM_STATE_STROB:
+						next_state <= FSM_STATE_ADDRgen_WR;
+					FSM_STATE_ADDRgen_WR:
+						if(tmp_end == 1) begin
+							next_state <= FSM_STATE_WAIT;
+						end else begin
+							next_state <= FSM_STATE_R;
+						end
+				endcase
+			end
+		end 
+	endgenerate
 	
-			FSM_STATE_ADDRESS:
-				next_state <= FSM_STATE_R;
-
-		endcase
-	end
 
 	always @(posedge CLK) begin
 		if(tmp_count_rst) begin 

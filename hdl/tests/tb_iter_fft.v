@@ -2,7 +2,7 @@ module tb_iter_fft;
 
 
 	parameter DWL = 16;
-	parameter AWL = 5;
+	parameter AWL = 8;
 	parameter INIT_FILE = "../matlab/data.txt";
 	parameter DEBUG_RES_FILE_NAME = "../matlab/res.txt";
 	reg 					CLK;
@@ -20,8 +20,9 @@ module tb_iter_fft;
 
 	top_fft_iter #(
 		.IWL(32),
-		.AWL(11),
+		.AWL(8),
 		.INIT_FILE (INIT_FILE),
+		.BUT_MUL_COUNT(4),
 		.DEBUG_RES_FILE_NAME(DEBUG_RES_FILE_NAME)
 	)fft(	
 		.wr_res(wr_res),
@@ -53,7 +54,7 @@ module tb_iter_fft;
 		START <= 1;
 		#20 START <= 0;
 		
-		#676000 wr_res <= 1;
+		#51230 wr_res <= 1;
 	end 
     
 endmodule 		

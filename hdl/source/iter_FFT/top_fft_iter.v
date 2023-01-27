@@ -1,11 +1,12 @@
 module top_fft_iter #(
-	parameter IWL = 32,
-	parameter IDWL = 16,
-	parameter AWL = 5,
-	parameter LayWL = 4,
-	parameter inverse = 0,
-	parameter INIT_FILE = "",
-	parameter DEBUG_RES_FILE_NAME = "default_res.txt"
+	parameter IWL 					= 32,
+	parameter IDWL 					= 16,
+	parameter AWL 					= 5,
+	parameter LayWL 				= 4,
+	parameter inverse 				= 0,
+	parameter INIT_FILE 			= "",
+	parameter BUT_MUL_COUNT 		= 1,
+	parameter DEBUG_RES_FILE_NAME 	= "default_res.txt"
 )(	
 
 	input 	wr_res,
@@ -18,8 +19,8 @@ module top_fft_iter #(
 	input wire 		[IWL-1:0] 		i_A_DATA,
 	input wire 		[IWL-1:0] 		i_B_DATA,
 
-	input wire 		[IWL-1:0] 		i_A_ADDR,
-	input wire 		[IWL-1:0] 		i_B_ADDR,
+	input wire 		[AWL-1:0] 		i_A_ADDR,
+	input wire 		[AWL-1:0] 		i_B_ADDR,
 
 	input wire						i_RAM_Wr,
 	output wire						o_RAM_BLOCK
@@ -28,65 +29,62 @@ module top_fft_iter #(
 	localparam DWL = IDWL;
 	localparam W_DWL = IDWL;
 	localparam WWL = AWL;
-
-
-	//parameter LayWL = $rtoi($cail($log2(AWL)));
-
+	localparam BUT_NUM = 2^(AWL-1);
 
 	//
-	wire [IWL-1:0] a_value;
-	wire [IWL-1:0] b_value;
-
-	reg  [IWL-1:0] reg_a_value;
-	reg  [IWL-1:0] reg_b_value;
-
-	wire [IWL-1:0] x_value;
-	wire [IWL-1:0] y_value;
-
-	//
-	wire [AWL-1:0] a_addr;
-	wire [AWL-1:0] b_addr;
+	wire 	[IWL-1:0] 		a_value;
+	wire 	[IWL-1:0] 		b_value;
 	
-	reg  [AWL-1:0] wr_a_addr;
-	reg  [AWL-1:0] wr_b_addr;
-
-	reg  [AWL-1:0] wr_tmp_a_addr;
-	reg  [AWL-1:0] wr_tmp_b_addr;
-
-
-	wire [AWL-1:0] r_a_addr;
-	wire [AWL-1:0] r_b_addr;
-
-	wire [IWL-1:0] RAM_a_value;
-	wire [IWL-1:0] RAM_b_value;
-
-	//
-	wire [AWL-1:0] in_RAM_a_addr;
-	wire [AWL-1:0] in_RAM_b_addr;
-
-	wire [IWL-1:0] in_RAM_a_value;
-	wire [IWL-1:0] in_RAM_b_value;
-
-	wire in_RAM_wr;
-	//
-
-	wire [DWL-1:0] cos_value;
-	wire [DWL-1:0] sin_value;
-
-	wire [W_DWL-1:0] w_value_i;
-	wire [W_DWL-1:0] w_value_r;
-
-	reg  [W_DWL*2-1:0] reg_w_value;
-	wire [WWL-1:0] w_addr;
-
-	//
-	wire first;
-	wire lay_en;
-	wire wr;
-	wire addr_en;
-	wire but_strob;
-	wire strb_out;
-
+	reg  	[IWL-1:0] 		reg_a_value;
+	reg  	[IWL-1:0] 		reg_b_value;
+	
+	wire 	[IWL-1:0] 		x_value;
+	wire 	[IWL-1:0] 		y_value;
+	
+	//	
+	wire 	[AWL-1:0] 		a_addr;
+	wire 	[AWL-1:0] 		b_addr;
+		
+	reg  	[AWL-1:0] 		wr_a_addr;
+	reg  	[AWL-1:0] 		wr_b_addr;
+	
+	reg  	[AWL-1:0] 		wr_tmp_a_addr;
+	reg  	[AWL-1:0] 		wr_tmp_b_addr;
+	
+	
+	wire 	[AWL-1:0] 		r_a_addr;
+	wire 	[AWL-1:0] 		r_b_addr;
+	
+	wire 	[IWL-1:0] 		RAM_a_value;
+	wire 	[IWL-1:0] 		RAM_b_value;
+	
+	//	
+	wire 	[AWL-1:0] 		in_RAM_a_addr;
+	wire 	[AWL-1:0] 		in_RAM_b_addr;
+	
+	wire 	[IWL-1:0] 		in_RAM_a_value;
+	wire 	[IWL-1:0] 		in_RAM_b_value;
+	
+	wire 					in_RAM_wr;
+	//	
+	
+	wire 	[DWL-1:0] 		cos_value;
+	wire 	[DWL-1:0] 		sin_value;
+	
+	wire 	[W_DWL-1:0] 	w_value_i;
+	wire 	[W_DWL-1:0] 	w_value_r;
+	
+	reg  	[W_DWL*2-1:0] 	reg_w_value;
+	wire 	[WWL-1:0] 		w_addr;
+	
+	//	
+	wire 					first;
+	wire 					lay_en;
+	wire 					wr;
+	wire 					addr_en;
+	wire 					but_strob;
+	wire 					strb_out;
+	
 	assign a_value			= (first == 1)	? in_RAM_a_value	: RAM_a_value;
 	assign b_value			= (first == 1)	? in_RAM_b_value	: RAM_b_value;
 
@@ -125,7 +123,6 @@ module top_fft_iter #(
 			reg_w_value <= {w_value_r, w_value_i};
 		end
 	end
-
 
 	dual_port_RAM_unit #(
 		.DWL		(IWL			),
@@ -174,7 +171,7 @@ module top_fft_iter #(
 
 	sin_table_unit #(
 		.DWL		(DWL			),
-		.DFL		(DWL-1			),
+		//.DFL		(DWL-1			),
 		.AWL		(WWL-1			),
 		.table_division(2			)) 
 	sin_table (
@@ -185,7 +182,7 @@ module top_fft_iter #(
 
 	sin_table_unit #(
 		.DWL		(DWL			),
-		.DFL		(DWL-1			),
+		//.DFL		(DWL-1			),
 		.AWL		(WWL-1			),
 		.COS		(1				),
 		.table_division(2			)) 
@@ -195,12 +192,13 @@ module top_fft_iter #(
 	);
 
 
-	complex_butterfly_iter #(
+	complex_butterfly_selection #(
 		.IWL1			(DWL								),
 		.IWL2			(W_DWL								),
 		.AWL			(DWL+1								),
 		.OWL			(DWL								),
-		.CONSTANT_SHIFT	(1'b1								)) 
+		.CONSTANT_SHIFT	(1'b1								),
+		.BUT_MUL_COUNT	(BUT_MUL_COUNT						)) 
 		butterfly(
 		.clk 			(CLK 								),	        
 		.rst         	(RST         						),
@@ -249,13 +247,12 @@ module top_fft_iter #(
 		.o_DATA_B	(RAM_b_value	)
 	);
 
-
-
 	control_unit_fft_iter #(
 		.LAYERS 	(AWL			),
-		.BUTTERFLYES(2^(AWL-1)		),
+		.BUTTERFLYES(BUT_NUM		),
 		.LayWL 		(LayWL			),
-		.ButtWL 	(AWL-1			))	
+		.ButtWL 	(AWL-1			),
+		.BUT_MUL_COUNT(BUT_MUL_COUNT))	
 	control_unit(
 		.CLK		(CLK			),
 		.RST		(RST			),

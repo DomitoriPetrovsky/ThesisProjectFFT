@@ -1,6 +1,6 @@
 module sin_table_unit #(
 	parameter DWL = 8,
-	parameter DFL = 7,
+	//parameter DFL = 7,
 	parameter AWL = 4,
 	parameter real A = 1.0,
 	parameter table_division = 1,
@@ -19,7 +19,7 @@ module sin_table_unit #(
 		end
 	endfunction
 
-	localparam FS = $pow(2, AWL) *  table_division;
+	localparam FS = 2**AWL *  table_division;
 	localparam F = 1;
 	localparam N = 2**AWL;//$pow(2, AWL);
 
@@ -31,11 +31,11 @@ module sin_table_unit #(
 		for(i = 0; i < N; i = i + 1)begin
 			tmp_r = SIN_VALUE(FS, F, i, COS, A);
 			if (tmp_r != 1.0) begin 
-				tabel[i] = $rtoi($floor(tmp_r * $pow(2, DFL)));
+				tabel[i] = $rtoi($floor(tmp_r * $pow(2, DWL-1)));
 			end else begin 
 				//tabel[i] = {(DWL-DFL){0}, DFL{1}};
-				tabel[i][DWL-1:DFL] = 0;
-				tabel[i][DFL-1:0] = {DFL{1'b1}};
+				tabel[i][DWL-1] = 1'b0;
+				tabel[i][DWL-2:0] = {DWL-1{1'b1}};
 			end 
 
 		end

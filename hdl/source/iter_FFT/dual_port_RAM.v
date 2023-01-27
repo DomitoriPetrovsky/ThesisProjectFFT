@@ -24,7 +24,7 @@ module dual_port_RAM_unit #(
 	input  wire	[AWL-1:0]	i_ADDR_B,
 	output wire	[DWL-1:0]	o_DATA_B
 );
-	localparam RAM_DEPTH = $rtoi($pow(2, AWL));
+	localparam RAM_DEPTH = 2**AWL;
 
 	reg [DWL-1:0] RAM [RAM_DEPTH-1:0];
 	reg [DWL-1:0] RAM_data_a  = {DWL{1'b0}};
