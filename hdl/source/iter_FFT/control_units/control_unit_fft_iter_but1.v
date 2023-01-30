@@ -1,9 +1,8 @@
-module control_unit_fft_iter #(
+module control_unit_fft_iter_but1 #(
 	parameter LAYERS 		= 5,
 	parameter BUTTERFLYES 	= 16,
 	parameter LayWL 		= 3,
-	parameter ButtWL 		= 4,
-	parameter BUT_MUL_COUNT = 1
+	parameter ButtWL 		= 4
 )(
 	input 	wire					CLK,
 	input 	wire					RST,
@@ -75,80 +74,31 @@ module control_unit_fft_iter #(
 	assign BUT_STROB 		= 	tmp_but_strob;
 	assign ADDR_EN 			= 	addr_strob;
 
-	generate
-		if (BUT_MUL_COUNT == 1) begin
-			always @(*) begin
-				case (state)
-					FSM_STATE_WAIT:
-						if(START == 1) begin
-							next_state <= FSM_STATE_R;
-						end else begin
-							next_state <= state;
-						end
-					FSM_STATE_R:
-						next_state <= FSM_STATE_STROB;
-					FSM_STATE_STROB:
-						next_state <= FSM_STATE_DELAY_1;
-					FSM_STATE_DELAY_1:
-						next_state <= FSM_STATE_ADDRgen_WR;
-					FSM_STATE_ADDRgen_WR:
-						if(tmp_end == 1) begin
-							next_state <= FSM_STATE_WAIT;
-						end else begin
-							next_state <= FSM_STATE_DELAY_2;
-						end
-					FSM_STATE_DELAY_2:
-						next_state <= FSM_STATE_R;
-				endcase
-			end
-		end
-		if (BUT_MUL_COUNT == 2) begin
-			always @(*) begin
-				case (state)
-					FSM_STATE_WAIT:
-						if(START == 1) begin
-							next_state <= FSM_STATE_R;
-						end else begin
-							next_state <= state;
-						end
-					FSM_STATE_R:
-						next_state <= FSM_STATE_STROB;
-					FSM_STATE_STROB:
-						next_state <= FSM_STATE_DELAY_1;
-					FSM_STATE_DELAY_1:
-						next_state <= FSM_STATE_ADDRgen_WR;
-					FSM_STATE_ADDRgen_WR:
-						if(tmp_end == 1) begin
-							next_state <= FSM_STATE_WAIT;
-						end else begin
-							next_state <= FSM_STATE_R;
-						end
-				endcase
-			end
-		end 
-		if (BUT_MUL_COUNT == 4) begin
-			always @(*) begin
-				case (state)
-					FSM_STATE_WAIT:
-						if(START == 1) begin
-							next_state <= FSM_STATE_R;
-						end else begin
-							next_state <= state;
-						end
-					FSM_STATE_R:
-						next_state <= FSM_STATE_STROB;
-					FSM_STATE_STROB:
-						next_state <= FSM_STATE_ADDRgen_WR;
-					FSM_STATE_ADDRgen_WR:
-						if(tmp_end == 1) begin
-							next_state <= FSM_STATE_WAIT;
-						end else begin
-							next_state <= FSM_STATE_R;
-						end
-				endcase
-			end
-		end 
-	endgenerate
+	always @(*) begin
+		case (state)
+			FSM_STATE_WAIT:
+				if(START == 1) begin
+					next_state <= FSM_STATE_R;
+				end else begin
+					next_state <= state;
+				end
+			FSM_STATE_R:
+				next_state <= FSM_STATE_DELAY_1;
+			FSM_STATE_DELAY_1:
+				next_state <= FSM_STATE_STROB;
+			FSM_STATE_STROB:
+				next_state <= FSM_STATE_ADDRgen_WR;
+			FSM_STATE_ADDRgen_WR:
+				if(tmp_end == 1) begin
+					next_state <= FSM_STATE_WAIT;
+				end else begin
+					next_state <= FSM_STATE_DELAY_2;
+				end
+			FSM_STATE_DELAY_2:
+				next_state <= FSM_STATE_R;
+		endcase
+	end
+
 	
 
 	always @(posedge CLK) begin

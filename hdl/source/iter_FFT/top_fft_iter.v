@@ -247,13 +247,13 @@ module top_fft_iter #(
 		.o_DATA_B	(RAM_b_value	)
 	);
 
-	control_unit_fft_iter #(
+	control_unit_fft_iter_selection #(
 		.LAYERS 	(AWL			),
 		.BUTTERFLYES(BUT_NUM		),
 		.LayWL 		(LayWL			),
 		.ButtWL 	(AWL-1			),
 		.BUT_MUL_COUNT(BUT_MUL_COUNT))	
-	control_unit(
+	control_unit_selection(
 		.CLK		(CLK			),
 		.RST		(RST			),
 		.EN			(EN				),
@@ -263,8 +263,7 @@ module top_fft_iter #(
 		.ADDR_EN	(addr_en		),
 		.Wr			(wr				),
 		.FIRST		(first			)
-
-);
+	);
 
 
 endmodule
