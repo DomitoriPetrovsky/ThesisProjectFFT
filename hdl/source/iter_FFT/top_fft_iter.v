@@ -5,7 +5,7 @@ module top_fft_iter #(
 	parameter LayWL 				= 4,
 	parameter inverse 				= 0,
 	parameter INIT_FILE 			= "",
-	parameter BUT_MUL_COUNT 		= 1,
+	parameter BUT_CLK_CYCLE 		= 3,
 	parameter DEBUG_RES_FILE_NAME 	= "default_res.txt"
 )(	
 
@@ -48,8 +48,11 @@ module top_fft_iter #(
 	reg  	[AWL-1:0] 		wr_a_addr;
 	reg  	[AWL-1:0] 		wr_b_addr;
 	
-	reg  	[AWL-1:0] 		wr_tmp_a_addr;
-	reg  	[AWL-1:0] 		wr_tmp_b_addr;
+	reg  	[AWL-1:0] 		wr_tmp1_a_addr;
+	reg  	[AWL-1:0] 		wr_tmp1_b_addr;
+
+	reg  	[AWL-1:0] 		wr_tmp2_a_addr;
+	reg  	[AWL-1:0] 		wr_tmp2_b_addr;
 	
 	
 	wire 	[AWL-1:0] 		r_a_addr;
@@ -75,6 +78,7 @@ module top_fft_iter #(
 	wire 	[W_DWL-1:0] 	w_value_r;
 	
 	reg  	[W_DWL*2-1:0] 	reg_w_value;
+	reg  	[W_DWL*2-1:0] 	reg_w_tmp_value;
 	wire 	[WWL-1:0] 		w_addr;
 	
 	//	
@@ -82,6 +86,7 @@ module top_fft_iter #(
 	wire 					lay_en;
 	wire 					wr;
 	wire 					addr_en;
+	wire 					ram_en;
 	wire 					but_strob;
 	wire 					strb_out;
 	
@@ -101,33 +106,64 @@ module top_fft_iter #(
 
 	assign o_RAM_BLOCK		= first;
 	
-	always @(posedge CLK) begin
-		if (but_strob) begin
-			wr_tmp_a_addr <= r_a_addr;
-			wr_tmp_b_addr <= r_b_addr;
+	generate
+		if ((BUT_CLK_CYCLE == 3) || (BUT_CLK_CYCLE == 2)) begin
+			always @(posedge CLK) begin
+				if (but_strob) begin
+					wr_tmp1_a_addr <= r_a_addr;
+					wr_tmp1_b_addr <= r_b_addr;
 
-			wr_a_addr <= wr_tmp_a_addr; 
-			wr_b_addr <= wr_tmp_b_addr;
+					wr_tmp2_a_addr <= wr_tmp1_a_addr;
+					wr_tmp2_b_addr <= wr_tmp1_b_addr;
+
+					wr_a_addr <= wr_tmp2_a_addr; 
+					wr_b_addr <= wr_tmp2_b_addr;
+				end
+			end
+			always @(posedge CLK) begin
+				if (but_strob) begin
+					reg_w_tmp_value <= {w_value_r, w_value_i};
+					reg_w_value 	<= reg_w_tmp_value;
+				end
+			end
+		end else begin
+			always @(posedge CLK) begin
+				if (but_strob) begin
+					wr_tmp1_a_addr <= r_a_addr;
+					wr_tmp1_b_addr <= r_b_addr;
+		
+					wr_a_addr <= wr_tmp1_a_addr; 
+					wr_b_addr <= wr_tmp1_b_addr;
+				end
+			end
+			always @(posedge CLK) begin
+				if (but_strob) begin
+					reg_w_value <= {w_value_r, w_value_i};
+				end
+			end
+		end
+	endgenerate
+	
+
+	always @(posedge CLK) begin
+		if (RST) begin
+			reg_a_value <= 0;
+			reg_b_value <= 0;
+		end else begin 
+			if (but_strob) begin
+				reg_a_value <= a_value; 
+				reg_b_value <= b_value;
+			end
 		end
 	end
 
-	always @(posedge CLK) begin
-		if (but_strob) begin
-			reg_a_value <= a_value; 
-			reg_b_value <= b_value;
-		end
-	end
 
-	always @(posedge CLK) begin
-		if (but_strob) begin
-			reg_w_value <= {w_value_r, w_value_i};
-		end
-	end
 
 	dual_port_RAM_unit #(
 		.DWL		(IWL			),
 		.AWL		(AWL			),
-		.INIT_FILE	(INIT_FILE		)) 
+		.INIT_FILE	(INIT_FILE		),
+		.RAM_PERFORMANCE("NO")) 
 	input_ram_unit (
 		.CLK_A		(CLK			),
 		.WrE_A		(in_RAM_wr		),
@@ -198,7 +234,7 @@ module top_fft_iter #(
 		.AWL			(DWL+1								),
 		.OWL			(DWL								),
 		.CONSTANT_SHIFT	(1'b1								),
-		.BUT_MUL_COUNT	(BUT_MUL_COUNT						)) 
+		.BUT_CLK_CYCLE	(BUT_CLK_CYCLE						)) 
 		butterfly(
 		.clk 			(CLK 								),	        
 		.rst         	(RST         						),
@@ -222,17 +258,18 @@ module top_fft_iter #(
 		.strb_out    	(strb_out    						)
 	);
 
-	dual_port_RAM_unit #(
+	(* DONT_TOUCH = "yes" *) dual_port_RAM_unit #(
 		.DWL		(IWL			),
 		.DEBUG_RES_FILE_NAME (DEBUG_RES_FILE_NAME),
-		.AWL		(AWL			)) 
+		.AWL		(AWL			),
+		.RAM_PERFORMANCE("NO")) 
 	workt_ram_unit (
 
 		.debug_write_res_to_file(wr_res),
 
 		.CLK_A		(CLK			),
 		.WrE_A		(wr				),
-		.EN_A		(EN				),
+		.EN_A		(ram_en			),
 		.RST_A		(RST			),
 		.i_DATA_A	(x_value		),
 		.i_ADDR_A	(a_addr			),
@@ -240,7 +277,7 @@ module top_fft_iter #(
 
 		.CLK_B		(CLK			),
 		.WrE_B		(wr				),
-		.EN_B		(EN				),
+		.EN_B		(ram_en			),
 		.RST_B		(RST			),
 		.i_DATA_B	(y_value		),
 		.i_ADDR_B	(b_addr			),
@@ -252,7 +289,7 @@ module top_fft_iter #(
 		.BUTTERFLYES(BUT_NUM		),
 		.LayWL 		(LayWL			),
 		.ButtWL 	(AWL-1			),
-		.BUT_MUL_COUNT(BUT_MUL_COUNT))	
+		.BUT_CLK_CYCLE(BUT_CLK_CYCLE))	
 	control_unit_selection(
 		.CLK		(CLK			),
 		.RST		(RST			),
@@ -261,6 +298,7 @@ module top_fft_iter #(
 		.BUT_STROB	(but_strob		),
 		.LAY_EN		(lay_en			),
 		.ADDR_EN	(addr_en		),
+		.RAM_EN		(ram_en			),
 		.Wr			(wr				),
 		.FIRST		(first			)
 	);

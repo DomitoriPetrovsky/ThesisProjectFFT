@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
-ENTITY complex_butterfly_iter_4mul1T IS
+ENTITY complex_butterfly_iter_2_clk_cycles IS
   GENERIC (
     IWL1 : natural := 16;
     IWL2 : natural := 16;
@@ -31,13 +31,15 @@ ENTITY complex_butterfly_iter_4mul1T IS
 
     strb_out     : OUT std_logic --valid out
   );
-END complex_butterfly_iter_4mul1T;
+END complex_butterfly_iter_2_clk_cycles;
 
-ARCHITECTURE rtl OF complex_butterfly_iter_4mul1T IS
+ARCHITECTURE rtl OF complex_butterfly_iter_2_clk_cycles IS
 
   CONSTANT PROD_WL : natural := IWL1 + IWL2;
 
   SIGNAL MUL_1_out, MUL_2_out, MUL_3_out, MUL_4_out               : std_logic_vector(AWL DOWNTO 0);
+
+  SIGNAL MUL_1_out_b, MUL_2_out_b, MUL_3_out_b, MUL_4_out_b       : std_logic_vector(AWL DOWNTO 0);
 
   SIGNAL MUL_1_din1_mux                                           : std_logic_vector(IWL1 - 1 DOWNTO 0);
   SIGNAL MUL_1_din2_mux                                           : std_logic_vector(IWL2 - 1 DOWNTO 0);
@@ -151,8 +153,8 @@ BEGIN
     pre_sum_din3_im <= din3_im(OWL-1) & din3_im & '0';
   END GENERATE;
 
-  ADD_0_din1_mux <= MUL_3_out; 
-  ADD_0_din2_mux <= MUL_4_out; 
+  ADD_0_din1_mux <= MUL_3_out_b; 
+  ADD_0_din2_mux <= MUL_4_out_b; 
 
   add_proc_0 : PROCESS (ADD_0_din1_mux, ADD_0_din2_mux)
     VARIABLE add_v     : signed(AWL DOWNTO 0);
@@ -161,7 +163,7 @@ BEGIN
   BEGIN
     add_v    := signed(ADD_0_din1_mux) + signed(ADD_0_din2_mux);
     IF add_v(AWL) /= add_v(AWL - 1) THEN
-      add_v_sat(AWL downto AWL-1) := (2 => add_v_dc(AWL));
+      add_v_sat(AWL downto AWL-1) := (OTHERS => add_v_dc(AWL));
       add_v_sat(AWL - 1 DOWNTO 0) := (OTHERS => add_v_dc(AWL - 1));
     ELSE
       add_v_sat := add_v;
@@ -169,8 +171,8 @@ BEGIN
     add_0_out <= std_logic_vector(add_v_sat);
   END PROCESS;
 
-  SUB_0_din1_mux <= MUL_1_out; 
-  SUB_0_din2_mux <= MUL_2_out; 
+  SUB_0_din1_mux <= MUL_1_out_b; 
+  SUB_0_din2_mux <= MUL_2_out_b; 
 
   sub_proc_0 : PROCESS (SUB_0_din1_mux, SUB_0_din2_mux)
     VARIABLE add_v     : signed(AWL DOWNTO 0);
@@ -179,7 +181,7 @@ BEGIN
   BEGIN
     add_v    := signed(SUB_0_din1_mux) - signed(SUB_0_din2_mux);
     IF add_v(AWL) /= add_v(AWL - 1) THEN
-      add_v_sat(AWL downto AWL-1) := (2 => add_v_dc(AWL));
+      add_v_sat(AWL downto AWL-1) := (OTHERS => add_v_dc(AWL));
       add_v_sat(AWL - 1 DOWNTO 0) := (OTHERS => add_v_dc(AWL - 1));
     ELSE
       add_v_sat := add_v;
@@ -261,6 +263,16 @@ BEGIN
       add_v_sat := add_v_dc(AWL - 1 DOWNTO AWL - OWL);
     END IF;
     sub_2_out <= std_logic_vector(add_v_sat);
+  END PROCESS;
+
+  pipe_reg_proc_mul_b : PROCESS (clk)--, rst)
+  BEGIN
+    IF rising_edge(clk) THEN
+      MUL_1_out_b <= MUL_1_out;
+      MUL_2_out_b <= MUL_2_out; 
+      MUL_3_out_b <= MUL_3_out; 
+      MUL_4_out_b <= MUL_4_out;
+    END IF;
   END PROCESS;
 
   reg_out_proc : PROCESS (clk, rst)

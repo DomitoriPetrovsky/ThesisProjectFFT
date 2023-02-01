@@ -1,4 +1,4 @@
-module control_unit_fft_iter_but1 #(
+module control_unit_fft_iter_5_cyc_but #(
 	parameter LAYERS 		= 5,
 	parameter BUTTERFLYES 	= 16,
 	parameter LayWL 		= 3,
@@ -13,6 +13,7 @@ module control_unit_fft_iter_but1 #(
 	output 	wire					BUT_STROB,
 	output 	wire					LAY_EN,
 	output 	wire					ADDR_EN,
+	output 	wire					RAM_EN,
 	output 	wire					Wr,
 	output 	wire					FIRST
 
@@ -47,12 +48,15 @@ module control_unit_fft_iter_but1 #(
 	wire						tmp_lay_en;
 	wire 						tmp_wr;
 	wire 						tmp_first;
-
+	wire 						tmp_ram_en;
 
 	assign tmp_but_strob 	= 	(state == FSM_STATE_STROB)		? 1'b1 : 1'b0;
 	assign addr_strob 		=	(state == FSM_STATE_ADDRgen_WR)	? 1'b1 : 1'b0; 
 	assign tmp_wr 			= 	(state == FSM_STATE_ADDRgen_WR)	? 1'b1 : 1'b0;
 	assign tmp_count_rst 	= 	(state == FSM_STATE_WAIT)		? 1'b1 : 1'b0;
+
+	assign tmp_ram_en 		= 	((state == FSM_STATE_R) 		|| 
+								(state == FSM_STATE_ADDRgen_WR))? 1'b1 : 1'b0;
 
 	assign tmp_first 		= 	((lay_count == {LayWL{1'b0}}) 	&& 
 								(state != FSM_STATE_WAIT))		? 1'b1 : 1'b0;
@@ -73,6 +77,7 @@ module control_unit_fft_iter_but1 #(
 	assign FIRST			= 	tmp_first;
 	assign BUT_STROB 		= 	tmp_but_strob;
 	assign ADDR_EN 			= 	addr_strob;
+	assign RAM_EN 			= 	tmp_ram_en;
 
 	always @(*) begin
 		case (state)

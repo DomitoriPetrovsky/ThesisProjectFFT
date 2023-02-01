@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
-ENTITY complex_butterfly_iter_1mul IS
+ENTITY complex_butterfly_iter_4_clk_cycles IS
   GENERIC (
     IWL1 : natural := 16;
     IWL2 : natural := 16;
@@ -31,19 +31,23 @@ ENTITY complex_butterfly_iter_1mul IS
 
     strb_out     : OUT std_logic --valid out
   );
-END complex_butterfly_iter_1mul;
+END complex_butterfly_iter_4_clk_cycles;
 
-ARCHITECTURE rtl OF complex_butterfly_iter_1mul IS
+ARCHITECTURE rtl OF complex_butterfly_iter_4_clk_cycles IS
 
   CONSTANT PROD_WL : natural := IWL1 + IWL2;
 
-  SIGNAL MUL_out, MUL_out_b : std_logic_vector(AWL DOWNTO 0);
-  SIGNAL MUL_din1_mux                                           : std_logic_vector(IWL1 - 1 DOWNTO 0);
-  SIGNAL MUL_din2_mux                                           : std_logic_vector(IWL2 - 1 DOWNTO 0);
+  SIGNAL MUL_1_out, MUL_2_out : std_logic_vector(AWL DOWNTO 0);
+
+  SIGNAL MUL_1_din1_mux                                           : std_logic_vector(IWL1 - 1 DOWNTO 0);
+  SIGNAL MUL_1_din2_mux                                           : std_logic_vector(IWL2 - 1 DOWNTO 0);
+  SIGNAL MUL_2_din1_mux                                           : std_logic_vector(IWL1 - 1 DOWNTO 0);
+  SIGNAL MUL_2_din2_mux                                           : std_logic_vector(IWL2 - 1 DOWNTO 0);
+
   SIGNAL ADD_din1_mux, ADD_din2_mux, SUB_din1_mux, SUB_din2_mux : std_logic_vector(AWL DOWNTO 0);
   SIGNAL add_out, sub_out                                       : std_logic_vector(OWL - 1 DOWNTO 0);
 
-  SIGNAL pipe_cnt                                               : unsigned(2 DOWNTO 0); -- unsigned(1 DOWNTO 0);
+  SIGNAL pipe_cnt                                               : unsigned(1 DOWNTO 0); -- unsigned(1 DOWNTO 0);
 
   SIGNAL dout1_re_b                                             : std_logic_vector(OWL - 1 DOWNTO 0);
   SIGNAL dout2_re_b                                             : std_logic_vector(OWL - 1 DOWNTO 0);
@@ -73,7 +77,7 @@ BEGIN
     ELSIF rising_edge(clk) THEN
       IF strb_in = '1' THEN
         pipe_cnt <= (OTHERS               => '0');
-      ELSIF pipe_cnt /= ("100") THEN -- (pipe_cnt'RANGE => '1')
+      ELSIF pipe_cnt /= (pipe_cnt'RANGE => '1') THEN -- (pipe_cnt'RANGE => '1')
         pipe_cnt <= pipe_cnt + 1;
       END IF;
     END IF;
@@ -84,7 +88,7 @@ BEGIN
       IF rst = '1' THEN
         valid    <= '0';
       ELSIF falling_edge(clk) THEN
-        IF ((NOT pipe_cnt(0)) AND (NOT pipe_cnt(1)) AND pipe_cnt(2)) = '1' THEN -- (pipe_cnt(0) AND pipe_cnt(1))
+      IF (pipe_cnt(0) AND pipe_cnt(1)) = '1' THEN 
           valid <= '1';
         ELSE
           valid <= '0';
@@ -92,49 +96,57 @@ BEGIN
       END IF;
     END PROCESS;
 
-  MUL_din1_mux <= din1_re WHEN pipe_cnt(0) = '0' ELSE din1_im;
-  MUL_din2_mux <= din2_re WHEN (pipe_cnt(0) XOR pipe_cnt(1)) = '0' ELSE din2_im;
+  MUL_1_din1_mux <= din1_re;
+  MUL_2_din1_mux <= din1_im;
+
+  MUL_1_din2_mux <= din2_re WHEN (pipe_cnt(0) = '0') ELSE din2_im;
+  MUL_2_din2_mux <= din2_im WHEN (pipe_cnt(0) = '0') ELSE din2_re;
 
   mult_with_shift : IF (CONSTANT_SHIFT = 1) GENERATE
-    mul_proc : PROCESS (MUL_din1_mux, MUL_din2_mux)
+    mul_proc_1 : PROCESS (MUL_1_din1_mux, MUL_1_din2_mux) -- first mult
     VARIABLE G_mul : signed(PROD_WL - 1 DOWNTO 0);
     BEGIN
-      G_mul := signed(MUL_din1_mux) * signed(MUL_din2_mux);
-      MUL_out <= std_logic_vector(G_mul(PROD_WL - 1) & G_mul(PROD_WL - 1 DOWNTO PROD_WL - AWL));
-    END PROCESS mul_proc;
+      G_mul := signed(MUL_1_din1_mux) * signed(MUL_1_din2_mux);
+      MUL_1_out <= std_logic_vector(G_mul(PROD_WL - 1) & G_mul(PROD_WL - 1 DOWNTO PROD_WL - AWL));
+    END PROCESS mul_proc_1;
+
+    mul_proc_2 : PROCESS (MUL_2_din1_mux, MUL_2_din2_mux)-- second mult
+    VARIABLE G_mul : signed(PROD_WL - 1 DOWNTO 0);
+    BEGIN
+      G_mul := signed(MUL_2_din1_mux) * signed(MUL_2_din2_mux);
+      MUL_2_out <= std_logic_vector(G_mul(PROD_WL - 1) & G_mul(PROD_WL - 1 DOWNTO PROD_WL - AWL));
+    END PROCESS mul_proc_2;
 
     pre_sum_din3_re <= din3_re(OWL-1) & din3_re(OWL-1) & din3_re;
     pre_sum_din3_im <= din3_im(OWL-1) & din3_im(OWL-1) & din3_im;
   END GENERATE;
   mult_without_shift : IF (CONSTANT_SHIFT = 0) GENERATE
-    mul_proc : PROCESS (MUL_din1_mux, MUL_din2_mux)
+    mul_proc_1 : PROCESS (MUL_1_din1_mux, MUL_1_din2_mux)
     VARIABLE G_mul : signed(PROD_WL - 1 DOWNTO 0);
     BEGIN
-      G_mul := signed(MUL_din1_mux) * signed(MUL_din2_mux);
-      MUL_out <= std_logic_vector(G_mul(PROD_WL - 1 DOWNTO PROD_WL - 1 - AWL));
-    END PROCESS mul_proc;
+      G_mul := signed(MUL_1_din1_mux) * signed(MUL_1_din2_mux);
+      MUL_1_out <= std_logic_vector(G_mul(PROD_WL - 1 DOWNTO PROD_WL - 1 - AWL));
+    END PROCESS mul_proc_1;
+
+    mul_proc_2 : PROCESS (MUL_2_din1_mux, MUL_2_din2_mux)
+    VARIABLE G_mul : signed(PROD_WL - 1 DOWNTO 0);
+    BEGIN
+      G_mul := signed(MUL_2_din1_mux) * signed(MUL_2_din2_mux);
+      MUL_2_out <= std_logic_vector(G_mul(PROD_WL - 1 DOWNTO PROD_WL - 1 - AWL));
+    END PROCESS mul_proc_2;
 
     pre_sum_din3_re <= din3_re(OWL-1) & din3_re & '0';
     pre_sum_din3_im <= din3_im(OWL-1) & din3_im & '0';
   END GENERATE;
-    
-  mul_reg_proc : PROCESS (clk)
-  BEGIN
-    IF rising_edge(clk) THEN
-      IF pipe_cnt(0) = '0' THEN
-        MUL_out_b <= MUL_out;
-      END IF;
-    END IF;
-  END PROCESS;
 
   pre_sum_re_reg  <= re_reg (OWL-1) & re_reg  & '0';
   pre_sum_im_reg  <= im_reg (OWL-1) & im_reg  & '0';
 
-  ADD_din1_mux <= pre_sum_re_reg WHEN pipe_cnt = "010" ELSE 
-                  pre_sum_im_reg WHEN pipe_cnt = "100" ELSE MUL_out_b; 
+  ADD_din2_mux <= pre_sum_re_reg WHEN pipe_cnt = "10" ELSE 
+                  pre_sum_im_reg WHEN pipe_cnt = "11" ELSE MUL_1_out; 
 
-  ADD_din2_mux <= pre_sum_din3_re WHEN pipe_cnt = "010" ELSE 
-                  pre_sum_din3_im WHEN pipe_cnt = "100" ELSE MUL_out; 
+  ADD_din1_mux <= pre_sum_din3_re WHEN pipe_cnt = "10" ELSE 
+                  pre_sum_din3_im WHEN pipe_cnt = "11" ELSE MUL_2_out; 
   
   add_proc : PROCESS (ADD_din1_mux, ADD_din2_mux)
     VARIABLE add_v     : signed(AWL DOWNTO 0);
@@ -152,11 +164,11 @@ BEGIN
     add_out <= std_logic_vector(add_v_sat);
   END PROCESS;
 
-  SUB_din1_mux <= pre_sum_din3_re WHEN pipe_cnt = "010" ELSE 
-                  pre_sum_din3_im WHEN pipe_cnt = "100" ELSE MUL_out_b;
+  SUB_din2_mux <= pre_sum_re_reg WHEN pipe_cnt = "10" ELSE 
+                  pre_sum_im_reg WHEN pipe_cnt = "11" ELSE MUL_2_out;
 
-  SUB_din2_mux <= pre_sum_re_reg WHEN pipe_cnt = "010" ELSE 
-                  pre_sum_im_reg WHEN pipe_cnt = "100" ELSE MUL_out;
+  SUB_din1_mux <= pre_sum_din3_re WHEN pipe_cnt = "10" ELSE 
+                  pre_sum_din3_im WHEN pipe_cnt = "11" ELSE MUL_1_out; 
 
   sub_proc : PROCESS (SUB_din1_mux, SUB_din2_mux)
     VARIABLE add_v     : signed(AWL DOWNTO 0);
@@ -177,18 +189,8 @@ BEGIN
   pipe_reg_proc_re : PROCESS (clk)--, rst)
   BEGIN
     IF rising_edge(clk) THEN
-      IF pipe_cnt = "001" THEN
+      IF pipe_cnt = "00" THEN
         re_reg      <= sub_out;
-      END IF;
-    END IF;
-  END PROCESS;
-
-  pipe_reg_proc_re_b : PROCESS (clk)--, rst)
-  BEGIN
-    IF rising_edge(clk) THEN
-      IF pipe_cnt = "010" THEN
-        re1_reg      <= add_out;
-        re2_reg      <= sub_out;
       END IF;
     END IF;
   END PROCESS;
@@ -196,11 +198,22 @@ BEGIN
   pipe_reg_proc_img : PROCESS (clk)--, rst)
   BEGIN
     IF rising_edge(clk) THEN
-      IF pipe_cnt = "011" THEN
+      IF pipe_cnt = "01" THEN
         im_reg      <= add_out;
       END IF;
     END IF;
   END PROCESS;
+
+  pipe_reg_proc_re_b : PROCESS (clk)--, rst)
+  BEGIN
+    IF rising_edge(clk) THEN
+      IF pipe_cnt = "10" THEN
+        re1_reg      <= add_out;
+        re2_reg      <= sub_out;
+      END IF;
+    END IF;
+  END PROCESS;
+
   
 
   reg_out_proc : PROCESS (clk, rst)

@@ -20,9 +20,9 @@ module tb_iter_fft;
 
 	top_fft_iter #(
 		.IWL(32),
-		.AWL(8),
+		.AWL(5),
 		.INIT_FILE (INIT_FILE),
-		.BUT_MUL_COUNT(4),
+		.BUT_CLK_CYCLE(2),
 		.DEBUG_RES_FILE_NAME(DEBUG_RES_FILE_NAME)
 	)fft(	
 		.wr_res(wr_res),
@@ -54,7 +54,7 @@ module tb_iter_fft;
 		START <= 1;
 		#20 START <= 0;
 		
-		#51230 wr_res <= 1;
+		#2465 wr_res <= 1;
 	end 
     
 endmodule 		

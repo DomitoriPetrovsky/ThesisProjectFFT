@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
-ENTITY complex_butterfly_iter_4mul IS
+ENTITY complex_butterfly_iter_3_clk_cycles IS
   GENERIC (
     IWL1 : natural := 16;
     IWL2 : natural := 16;
@@ -31,13 +31,16 @@ ENTITY complex_butterfly_iter_4mul IS
 
     strb_out     : OUT std_logic --valid out
   );
-END complex_butterfly_iter_4mul;
+END complex_butterfly_iter_3_clk_cycles;
 
-ARCHITECTURE rtl OF complex_butterfly_iter_4mul IS
+ARCHITECTURE rtl OF complex_butterfly_iter_3_clk_cycles IS
 
   CONSTANT PROD_WL : natural := IWL1 + IWL2;
 
   SIGNAL MUL_1_out, MUL_2_out, MUL_3_out, MUL_4_out               : std_logic_vector(AWL DOWNTO 0);
+
+  SIGNAL MUL_1_out_b, MUL_2_out_b, MUL_3_out_b, MUL_4_out_b       : std_logic_vector(AWL DOWNTO 0);
+
 
   SIGNAL MUL_1_din1_mux                                           : std_logic_vector(IWL1 - 1 DOWNTO 0);
   SIGNAL MUL_1_din2_mux                                           : std_logic_vector(IWL2 - 1 DOWNTO 0);
@@ -60,7 +63,7 @@ ARCHITECTURE rtl OF complex_butterfly_iter_4mul IS
 
 
 
-  SIGNAL pipe_cnt                                                 : unsigned(0 DOWNTO 0); -- unsigned(1 DOWNTO 0);
+  SIGNAL pipe_cnt                                                 : unsigned(1 DOWNTO 0); -- unsigned(1 DOWNTO 0);
 
   SIGNAL dout1_re_b                                               : std_logic_vector(OWL - 1 DOWNTO 0);
   SIGNAL dout2_re_b                                               : std_logic_vector(OWL - 1 DOWNTO 0);
@@ -87,7 +90,7 @@ BEGIN
     ELSIF rising_edge(clk) THEN
       IF strb_in = '1' THEN
         pipe_cnt <= (OTHERS               => '0');
-      ELSIF pipe_cnt /= (pipe_cnt'RANGE => '1') THEN -- (pipe_cnt'RANGE => '1')
+      ELSIF pipe_cnt /=  "10" THEN -- (pipe_cnt'RANGE => '1')
         pipe_cnt <= pipe_cnt + 1;
       END IF;
     END IF;
@@ -98,7 +101,7 @@ BEGIN
       IF rst = '1' THEN
         valid    <= '0';
       ELSIF falling_edge(clk) THEN
-      IF (pipe_cnt(0)) = '1' THEN 
+      IF (pipe_cnt(1)) = '1' THEN 
           valid <= '1';
         ELSE
           valid <= '0';
@@ -188,8 +191,8 @@ BEGIN
   pre_sum_re_reg  <= re_reg (OWL-1) & re_reg  & '0';
   pre_sum_im_reg  <= im_reg (OWL-1) & im_reg  & '0';
 
-  ADD_1_din1_mux <= pre_sum_din3_re WHEN pipe_cnt = "1" ELSE MUL_3_out; 
-  ADD_1_din2_mux <= pre_sum_re_reg WHEN pipe_cnt = "1" ELSE MUL_4_out; 
+  ADD_1_din1_mux <= pre_sum_din3_re WHEN pipe_cnt(1) = '1' ELSE MUL_3_out_b; 
+  ADD_1_din2_mux <= pre_sum_re_reg WHEN pipe_cnt(1) = '1' ELSE MUL_4_out_b; 
   
   add_proc_1 : PROCESS (ADD_1_din1_mux, ADD_1_din2_mux)
     VARIABLE add_v     : signed(AWL DOWNTO 0);
@@ -226,8 +229,8 @@ BEGIN
     add_2_out <= std_logic_vector(add_v_sat);
   END PROCESS;
 
-  SUB_1_din1_mux <= pre_sum_din3_re WHEN pipe_cnt = "1" ELSE MUL_1_out;
-  SUB_1_din2_mux <= pre_sum_re_reg WHEN pipe_cnt = "1" ELSE MUL_2_out; 
+  SUB_1_din1_mux <= pre_sum_din3_re WHEN pipe_cnt(1) = '1' ELSE MUL_1_out_b;
+  SUB_1_din2_mux <= pre_sum_re_reg WHEN pipe_cnt(1) = '1' ELSE MUL_2_out_b; 
 
   sub_1_proc : PROCESS (SUB_1_din1_mux, SUB_1_din2_mux)
     VARIABLE add_v     : signed(AWL DOWNTO 0);
@@ -264,11 +267,22 @@ BEGIN
     sub_2_out <= std_logic_vector(add_v_sat);
   END PROCESS;
 
+  pipe_reg_proc_mul_b : PROCESS (clk)--, rst)
+  BEGIN
+    IF rising_edge(clk) THEN
+      IF pipe_cnt(0) = '0' THEN
+      MUL_1_out_b <= MUL_1_out;
+      MUL_2_out_b <= MUL_2_out; 
+      MUL_3_out_b <= MUL_3_out; 
+      MUL_4_out_b <= MUL_4_out;
+      END IF;
+    END IF;
+  END PROCESS;
 
   pipe_reg_proc_re_im : PROCESS (clk)--, rst)
   BEGIN
     IF rising_edge(clk) THEN
-      IF pipe_cnt = "0" THEN
+      IF pipe_cnt(0) = '1' THEN
         re_reg      <= sub_1_out;
         im_reg      <= add_1_out;
       END IF;
