@@ -31,6 +31,9 @@ module top_fft_iter #(
 	localparam WWL = AWL;
 	localparam BUT_NUM = 2^(AWL-1);
 
+	localparam synch_RESET = 1;
+	localparam RESET_LEVEL = 1;	
+
 	//
 	wire 	[IWL-1:0] 		a_value;
 	wire 	[IWL-1:0] 		b_value;
@@ -184,7 +187,9 @@ module top_fft_iter #(
 
 
 	butterfly_address_gen_unit #(
-		.AWL(AWL))
+		.AWL		(AWL			),
+		.synch_RESET(synch_RESET	),
+		.RESET_LEVEL(RESET_LEVEL	))
 	butterfly_address_gen(
 		.CLK		(CLK			),
 		.RST		(RST			),
@@ -196,7 +201,9 @@ module top_fft_iter #(
 
 
 	w_address_gen_unit #(
-		.AWL 		(WWL			))
+		.AWL 		(WWL			),
+		.synch_RESET(synch_RESET	),
+		.RESET_LEVEL(RESET_LEVEL	))
 	w_address_gen(
 		.CLK		(CLK			),
 		.RST		(RST			),
