@@ -56,13 +56,13 @@ module butterfly_address_gen_unit #(
 	end
 
 	ring_shift_register #(
-	.BITNESS 		(AWL			),
-	.shLeft			(shLeft			),
-	.EDGE			(EDGE			),
-	.synch_RESET	(synch_RESET	),
-	.RESET_LEVEL	(RESET_LEVEL	),
-	.RESET_VALUE	(RESET_VALUE	),
-	.EN_LEVEL		(EN_LEVEL		))
+		.BITNESS 		(AWL			),
+		.shLeft			(shLeft			),
+		.EDGE			(EDGE			),
+		.synch_RESET	(synch_RESET	),
+		.RESET_LEVEL	(RESET_LEVEL	),
+		.RESET_VALUE	(RESET_VALUE	),
+		.EN_LEVEL		(EN_LEVEL		))
 	ring_reg(
 		.CLK		(CLK			),
 		.EN			(LAY_EN			),
