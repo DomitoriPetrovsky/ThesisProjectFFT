@@ -92,17 +92,17 @@ module control_unit_fft_iter_2_cyc_but #(
 		case (state)
 			FSM_STATE_WAIT:
 				if(START == 1) begin
-					next_state <= FSM_STATE_R_STROB;
+					next_state = FSM_STATE_R_STROB;
 				end else begin
-					next_state <= state;
+					next_state = state;
 				end
 			FSM_STATE_R_STROB:
 				next_state <= FSM_STATE_ADDRgen_WR;
 			FSM_STATE_ADDRgen_WR:
 				if(tmp_end == 1) begin
-					next_state <= FSM_STATE_WAIT;
+					next_state = FSM_STATE_WAIT;
 				end else begin
-					next_state <= FSM_STATE_R_STROB;
+					next_state = FSM_STATE_R_STROB;
 				end
 		endcase
 	end
@@ -127,7 +127,8 @@ module control_unit_fft_iter_2_cyc_but #(
 		end
 	end
 	
-	always @(negedge CLK) begin
+	//always @(negedge CLK) begin
+	always @(posedge CLK) begin
 		if(RST) begin 
 			state <= FSM_STATE_WAIT;
 		end else begin 

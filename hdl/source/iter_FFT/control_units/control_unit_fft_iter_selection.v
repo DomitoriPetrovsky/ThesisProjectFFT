@@ -23,6 +23,27 @@ module control_unit_fft_iter_selection #(
 	output 	wire					LAST_LAY
 );
 	generate
+		if (BUT_CLK_CYCLE == 6) begin
+			control_unit_fft_iter_6_cyc_but #(
+				.LAYERS 	(LAYERS			),
+				.BUTTERFLYES(BUTTERFLYES	),
+				.LayWL 		(LayWL			),
+				.ButtWL 	(ButtWL			))	
+			control_unit(
+				.CLK		(CLK			),
+				.RST		(RST			),
+				.EN			(EN				),
+				.START		(START			),
+				.BUSY		(BUSY			),
+				.BUT_STROB	(BUT_STROB		),
+				.LAY_EN		(LAY_EN			),
+				.ADDR_EN	(ADDR_EN		),
+				.ADDR_RST	(ADDR_RST		),
+				.RAM_EN_R	(RAM_EN_R		),
+				.RAM_EN_WR	(RAM_EN_WR		),
+				.Wr			(Wr				),
+				.LAST_LAY	(LAST_LAY		));	
+		end
 		if (BUT_CLK_CYCLE == 5) begin
 			control_unit_fft_iter_5_cyc_but #(
 				.LAYERS 	(LAYERS			),
@@ -65,7 +86,7 @@ module control_unit_fft_iter_selection #(
 				.Wr			(Wr				),
 				.LAST_LAY	(LAST_LAY		));	
 		end
-		if (BUT_CLK_CYCLE == 3) begin
+		if ((BUT_CLK_CYCLE == 3) || (BUT_CLK_CYCLE == 33)) begin
 			control_unit_fft_iter_3_cyc_but #(
 				.LAYERS 	(LAYERS			),
 				.BUTTERFLYES(BUTTERFLYES	),

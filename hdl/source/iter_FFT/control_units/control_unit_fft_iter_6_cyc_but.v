@@ -1,4 +1,4 @@
-module control_unit_fft_iter_5_cyc_but #(
+module control_unit_fft_iter_6_cyc_but #(
 	parameter LAYERS 		= 5,
 	parameter BUTTERFLYES 	= 16,
 	parameter LayWL 		= 3,
@@ -26,10 +26,11 @@ module control_unit_fft_iter_5_cyc_but #(
 
 	localparam FSM_STATE_WAIT 		= 0; // 3'b000
 	localparam FSM_STATE_R 			= 4; // 3'b100
-	localparam FSM_STATE_STROB	 	= 5; // 3'b101
-	localparam FSM_STATE_ADDRgen_WR = 1; // 3'b001
-	localparam FSM_STATE_DELAY_1 	= 3; // 3'b011
-	localparam FSM_STATE_DELAY_2 	= 2; // 3'b010
+	localparam FSM_STATE_DELAY_1 	= 6; // 3'b110
+	localparam FSM_STATE_STROB	 	= 7; // 3'b111
+	localparam FSM_STATE_ADDRgen_WR = 3; // 3'b011
+	localparam FSM_STATE_DELAY_2 	= 1; // 3'b001
+	localparam FSM_STATE_DELAY_3 	= 5; // 3'b101
 	
 	
 	reg 	[FSM_BITNESS-1:0]	state;
@@ -73,8 +74,6 @@ module control_unit_fft_iter_5_cyc_but #(
 
 	assign tmp_last_lay_en	= 	((butt_count == 1)				&&  
 								(lay_count == LAYERS-1))		? 1'b1 : 1'b0;
-	//assign tmp_end_next 	= 	((butt_count == {ButtWL{1'b0}}) && 
-	//							(lay_count == LAYERS))			? 1'b1 : 1'b0;
 
 	assign tmp_lay_en 		= 	((butt_count == {ButtWL{1'b0}}) && 
 								(state == FSM_STATE_ADDRgen_WR) && 
@@ -116,11 +115,11 @@ module control_unit_fft_iter_5_cyc_but #(
 					next_state = FSM_STATE_DELAY_2;
 				end
 			FSM_STATE_DELAY_2:
+				next_state = FSM_STATE_DELAY_3;
+			FSM_STATE_DELAY_3:
 				next_state = FSM_STATE_R;
 		endcase
 	end
-
-	
 
 	always @(posedge CLK) begin
 		if(tmp_count_rst) begin 
@@ -141,7 +140,7 @@ module control_unit_fft_iter_5_cyc_but #(
 			end
 		end
 	end
-	
+
 	//always @(negedge CLK) begin
 	always @(posedge CLK) begin
 		if(RST) begin 

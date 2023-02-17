@@ -2,12 +2,8 @@ module dual_port_RAM_unit #(
 	parameter DWL = 16,
 	parameter AWL = 8,
 	parameter INIT_FILE = "",
-	parameter DEBUG_RES_FILE_NAME = "",
 	parameter RAM_PERFORMANCE = "LOW_LATENCY"
 )(
-
-	input wire 				debug_write_res_to_file,
-
 	input  wire 		  	CLK_A,
 	input  wire 		  	WrE_A,
 	input  wire 		  	EN_A,
@@ -29,13 +25,6 @@ module dual_port_RAM_unit #(
 	reg [DWL-1:0] RAM [RAM_DEPTH-1:0];
 	reg [DWL-1:0] RAM_data_a  = {DWL{1'b0}};
 	reg [DWL-1:0] RAM_data_b  = {DWL{1'b0}};
-
-
-	always @(debug_write_res_to_file) begin
-		if (debug_write_res_to_file) begin 
-			$writememh(DEBUG_RES_FILE_NAME, RAM, 0, RAM_DEPTH-1);
-		end
-	end
 
 	generate
 		if (INIT_FILE != "") begin: use_init_file

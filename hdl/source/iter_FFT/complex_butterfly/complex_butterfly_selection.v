@@ -22,6 +22,30 @@ module complex_butterfly_selection #(
 	output 	wire				strb_out
 );
 	generate 
+		if (BUT_CLK_CYCLE == 6) begin
+			complex_butterfly_iter_6_clk_cycles #(
+				.IWL1			(IWL1			),
+				.IWL2			(IWL2			),
+				.AWL			(AWL			),
+				.OWL			(OWL			),
+				.CONSTANT_SHIFT	(CONSTANT_SHIFT	)) 
+			cplx_but_1MUL_1ADD_1SUB(
+				.clk 			(clk 			),	        
+				.rst         	(rst         	),
+				.strb_in 		(strb_in 		),	    
+				.din1_re 		(din1_re 		),	//B    
+				.din1_im     	(din1_im     	),
+				.din2_re     	(din2_re     	),  // W
+				.din2_im     	(din2_im     	),
+				.din3_re		(din3_re		),  // A
+				.din3_im		(din3_im		),
+				.dout1_re     	(dout1_re     	),
+				.dout1_im     	(dout1_im     	),
+				.dout2_re     	(dout2_re     	),
+				.dout2_im     	(dout2_im     	),
+				.strb_out    	(strb_out    	)
+			);
+		end
 		if (BUT_CLK_CYCLE == 5) begin
 			complex_butterfly_iter_5_clk_cycles #(
 				.IWL1			(IWL1			),
@@ -29,7 +53,7 @@ module complex_butterfly_selection #(
 				.AWL			(AWL			),
 				.OWL			(OWL			),
 				.CONSTANT_SHIFT	(CONSTANT_SHIFT	)) 
-			cplx_but_1MUL(
+			cplx_but_2MUL_1ADD_1SUB(
 				.clk 			(clk 			),	        
 				.rst         	(rst         	),
 				.strb_in 		(strb_in 		),	    
@@ -53,7 +77,7 @@ module complex_butterfly_selection #(
 				.AWL			(AWL			),
 				.OWL			(OWL			),
 				.CONSTANT_SHIFT	(CONSTANT_SHIFT	)) 
-			cplx_but_2MUL(
+			cplx_but_2MUL_2ADD_2SUB(
 				.clk 			(clk 			),	        
 				.rst         	(rst         	),
 				.strb_in 		(strb_in 		),	    
@@ -71,13 +95,37 @@ module complex_butterfly_selection #(
 			);
 		end
 		if (BUT_CLK_CYCLE == 3) begin
+			complex_butterfly_pipe_3_clk_cycles #(
+				.IWL1			(IWL1			),
+				.IWL2			(IWL2			),
+				.AWL			(AWL			),
+				.OWL			(OWL			),
+				.CONSTANT_SHIFT	(CONSTANT_SHIFT	))
+			cplx_but_4MUL_2ADD_2SUB(
+				.clk 			(clk 			),	        
+				.rst         	(rst         	),
+				.strb_in 		(strb_in 		),	    
+				.din1_re 		(din1_re 		),	//B    
+				.din1_im     	(din1_im     	),
+				.din2_re     	(din2_re     	),  // W
+				.din2_im     	(din2_im     	),
+				.din3_re		(din3_re		),  // A
+				.din3_im		(din3_im		),
+				.dout1_re     	(dout1_re     	),
+				.dout1_im     	(dout1_im     	),
+				.dout2_re     	(dout2_re     	),
+				.dout2_im     	(dout2_im     	),
+				.strb_out    	(strb_out    	)
+			);
+		end
+		if (BUT_CLK_CYCLE == 33) begin
 			complex_butterfly_iter_3_clk_cycles #(
 				.IWL1			(IWL1			),
 				.IWL2			(IWL2			),
 				.AWL			(AWL			),
 				.OWL			(OWL			),
 				.CONSTANT_SHIFT	(CONSTANT_SHIFT	))
-			cplx_but_4MUL(
+			cplx_but_4MUL_2ADD_2SUB(
 				.clk 			(clk 			),	        
 				.rst         	(rst         	),
 				.strb_in 		(strb_in 		),	    
@@ -95,13 +143,13 @@ module complex_butterfly_selection #(
 			);
 		end
 		if (BUT_CLK_CYCLE == 2) begin
-			complex_butterfly_iter_2_clk_cycles #(
+			complex_butterfly_pipe_2_clk_cycles #(
 				.IWL1			(IWL1			),
 				.IWL2			(IWL2			),
 				.AWL			(AWL			),
 				.OWL			(OWL			),
 				.CONSTANT_SHIFT	(CONSTANT_SHIFT	))
-			cplx_but_4MUL(
+				cplx_but_4MUL_3ADD_3SUB(
 				.clk 			(clk 			),	        
 				.rst         	(rst         	),
 				.strb_in 		(strb_in 		),	    

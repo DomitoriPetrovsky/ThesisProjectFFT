@@ -1,15 +1,12 @@
 module top_fft_iter #(
-	//parameter IDWL 					= 16,
 	parameter DWL 					= 16,
 	parameter W_DWL					= 16,
 	parameter AWL 					= 5,
 	parameter BIT_REVERS_WRITE 		= 1,
 	parameter LayWL 				= 4,
 	parameter inverse 				= 0,
-	parameter BUT_CLK_CYCLE 		= 3,
-	parameter DEBUG_RES_FILE_NAME 	= "default_res.txt"
+	parameter BUT_CLK_CYCLE 		= 3
 )(	
-
 	input 	wr_res,
 
 	input 	wire					CLK,
@@ -19,8 +16,8 @@ module top_fft_iter #(
 	input 	wire 		[DWL-1:0] 	i_DATA_R,
 	input 	wire 		[DWL-1:0] 	i_DATA_I,
 	input 	wire					i_WR_DATA,
+	input	wire 					IN_FIFO_RST,		
 	output 	wire					FULL,
-
 
 	output 	wire 		[DWL-1:0] 	o_DATA_R,
 	output 	wire 		[DWL-1:0] 	o_DATA_I,
@@ -44,8 +41,8 @@ module top_fft_iter #(
 	localparam w_value_delay_enable 		= 1;
 	localparam w_value_delay_enable_level 	= 1;
 	
-	localparam a_b_address_delay 	= (BUT_CLK_CYCLE == 3) || (BUT_CLK_CYCLE == 2) ? 3	: 2;
-	localparam w_value_delay 		= (BUT_CLK_CYCLE == 3) || (BUT_CLK_CYCLE == 2) ? 2	: 1;
+	localparam a_b_address_delay 	= (BUT_CLK_CYCLE == 33) || (BUT_CLK_CYCLE == 3) || (BUT_CLK_CYCLE == 2) ? 3	: 2;
+	localparam w_value_delay 		= (BUT_CLK_CYCLE == 33) || (BUT_CLK_CYCLE == 3) || (BUT_CLK_CYCLE == 2) ? 2	: 1;
 
 	localparam butterfly_constant_shift = 1'b1;
 
@@ -101,6 +98,7 @@ module top_fft_iter #(
 	wire 					tmp_in_fifo_empty;
 	wire 					tmp_in_fifo_full;
 
+	wire					tmp_in_fifo_rst;
 	wire					in_fifo_r_en;
 ////////////////
 
@@ -110,7 +108,6 @@ module top_fft_iter #(
 	wire					out_fifo_wr_en;
 
 ////////////////
-	wire 					tmp_block;
 	wire 					tmp_block_reg;
 	wire 					tmp_block_rst;
 
@@ -131,19 +128,24 @@ module top_fft_iter #(
 	
 	//	
 	wire 					busy;
-
 	wire					tmp_full;
 	wire					tmp_start;
+	wire 					tmp_valid;
+
 
 	wire 					first;
 	wire					first_reg;
+	wire					first_reg_en;
+	wire 					last_lay;
+
 	wire 					lay_en;
 	wire 					wr;
 	wire 					addr_en;
 	wire 					addr_rst;
 	wire 					but_strob;
 	wire 					strb_out;
-	wire 					last_lay;
+	
+
 
 
 	assign a_value_r		= (first 	)	? in_FIFO_a_value_r	: RAM_a_value_r;
@@ -164,20 +166,16 @@ module top_fft_iter #(
 	assign out_fifo_wr_en	= (last_lay	)	? ram_en_wr			:	0;
 
 	assign tmp_start		= tmp_in_fifo_full & (~busy);
+	assign tmp_in_fifo_rst	= RST || (IN_FIFO_RST && !tmp_block_reg);
+	assign tmp_block_rst	= RST | (tmp_in_fifo_empty & addr_en);//RST | (tmp_in_fifo_empty & but_strob);
 
-	assign tmp_block_rst	= RST | (tmp_in_fifo_empty & but_strob);
-	//assign tmp_block		= tmp_block_reg || tmp_in_fifo_full;
-
+	assign first_reg_en		= ((BUT_CLK_CYCLE == 4) || (BUT_CLK_CYCLE == 5) || (BUT_CLK_CYCLE == 6)) ? ram_en_r : but_strob;
 	assign first			= first_reg || tmp_block_reg;
-
-	//assign FULL				= tmp_in_fifo_empty || first ;
-
-	//assign first			= first_reg || tmp_block;
 
 	assign tmp_full			= first || tmp_in_fifo_full;
 	
 	assign FULL				= tmp_full;
-	assign VALID			= tmp_out_fifo_block;
+	assign VALID			= tmp_valid;//tmp_out_fifo_block;
  
 	
 	in_fft_FIFO_unit #(
@@ -186,7 +184,7 @@ module top_fft_iter #(
 		.BIT_REVERS_WRITE(BIT_REVERS_WRITE	))
 	in_fifo(
 		.CLK			(CLK				),
-		.RST			(RST				),
+		.RST			(tmp_in_fifo_rst	),
 		.BLOCK			(tmp_full			),//
 		.R_INC			(in_fifo_r_en		),
 		.WR_INC			(i_WR_DATA			),
@@ -216,7 +214,7 @@ module top_fft_iter #(
 		.synch_RESET(synch_RESET	))
 	firstss_reg(
 		.CLK		(CLK			),
-		.EN			(but_strob		),
+		.EN			(first_reg_en	),//but_strob		),
 		.RST		(RST			),
 		.i_DATA		(tmp_block_reg	),
 		.o_DATA		(first_reg		)
@@ -382,9 +380,7 @@ module top_fft_iter #(
 		.o_DATA		(reg_b_value_i	)
 	);
 
-
-
-	(* use_dsp = "yes" *) complex_butterfly_selection #(
+	complex_butterfly_selection #(
 		.IWL1			(DWL						),
 		.IWL2			(W_DWL						),
 		.AWL			(DWL+1						),
@@ -416,13 +412,9 @@ module top_fft_iter #(
 
 	(* DONT_TOUCH = "yes" *) dual_port_RAM_unit #(
 		.DWL		(DWL			),
-		.DEBUG_RES_FILE_NAME (DEBUG_RES_FILE_NAME),
 		.AWL		(AWL			),
 		.RAM_PERFORMANCE("NO")) 
 	workt_ram_unit_r (
-
-		.debug_write_res_to_file(wr_res),
-
 		.CLK_A		(CLK			),
 		.WrE_A		(wr				),
 		.EN_A		(ram_en			),
@@ -442,13 +434,9 @@ module top_fft_iter #(
 
 	(* DONT_TOUCH = "yes" *) dual_port_RAM_unit #(
 		.DWL		(DWL			),
-		.DEBUG_RES_FILE_NAME (DEBUG_RES_FILE_NAME),
 		.AWL		(AWL			),
 		.RAM_PERFORMANCE("NO")) 
 	workt_ram_unit_i (
-
-		.debug_write_res_to_file(wr_res),
-
 		.CLK_A		(CLK			),
 		.WrE_A		(wr				),
 		.EN_A		(ram_en			),
@@ -467,9 +455,9 @@ module top_fft_iter #(
 	);
 
 	out_fft_FIFO_unit #(
-		.DWL			(DWL			),
-		.AWL			(AWL			),
-		.BIT_REVERS_RIDE(0				))
+		.DWL			(DWL				),
+		.AWL			(AWL				),
+		.BIT_REVERS_RIDE(0					))
 	out_fifo(
 		.CLK			(CLK				),
 		.RST			(RST				),
@@ -497,18 +485,28 @@ module top_fft_iter #(
 		.o_DATA		(tmp_out_fifo_block	)
 	);
 
+	param_register #(
+		.BITNESS	(1				),
+		.synch_RESET(synch_RESET	))
+	valid_reg(
+		.CLK		(CLK				),
+		.EN			(EN					),
+		.RST		(RST				),
+		.i_DATA		(tmp_out_fifo_block	),
+		.o_DATA		(tmp_valid			)
+	);
 
 	control_unit_fft_iter_selection #(
-		.LAYERS 	(AWL			),
-		.BUTTERFLYES(BUT_NUM		),
-		.LayWL 		(LayWL			),
-		.ButtWL 	(AWL-1			),
-		.BUT_CLK_CYCLE(BUT_CLK_CYCLE))	
+		.LAYERS 	(AWL				),
+		.BUTTERFLYES(BUT_NUM			),
+		.LayWL 		(LayWL				),
+		.ButtWL 	(AWL-1				),
+		.BUT_CLK_CYCLE(BUT_CLK_CYCLE	))	
 	control_unit_selection(
 		.CLK		(CLK				),
 		.RST		(RST				),
 		.EN			(EN					),
-		.START		(first	),
+		.START		(first				),
 		.BUSY		(busy				),
 		.BUT_STROB	(but_strob			),
 		.LAY_EN		(lay_en				),
