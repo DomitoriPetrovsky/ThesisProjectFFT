@@ -1,19 +1,25 @@
 %% tb_fft
 close all;
 
-CONVERSION_FORMAT = 2048;
+CONVERSION_FORMAT = 32;
+INVERS = 1;
 N = CONVERSION_FORMAT;
 n = 0:N-1;
-F = 17;
+F = 2;
 Fs = CONVERSION_FORMAT;
 
 pd = makedist('Normal','mu',0.01,'sigma',0.05);
 p = random(pd, size(n))';
 
-REAL_COMP = 0.25*sin(2*pi*(F/Fs)*n)' + 0.25*sin(2*pi*(13/Fs)*n)' + 0.25*sin(2*pi*(50/Fs)*n)';
-%REAL_COMP = ones(CONVERSION_FORMAT, 1);
-%IMG_COMP = zeros(CONVERSION_FORMAT, 1);
-IMG_COMP = cos(2*pi*(22/Fs)*n + pi/4)';
+%REAL_COMP = 0.5*sin(2*pi*(F/Fs)*n)'+ 0.25*sin(2*pi*(13/Fs)*n)' + 0.25*sin(2*pi*(7/Fs)*n)';
+REAL_COMP = ones(CONVERSION_FORMAT, 1);
+IMG_COMP = zeros(CONVERSION_FORMAT, 1);
+%IMG_COMP = cos(2*pi*(2/Fs)*n + pi/4)';
+%SIG = REAL_COMP + 1i*IMG_COMP;
+REAL_COMP(6) = 0.5;
+IMG_COMP(6) = -0.5;
+%REAL_COMP = real(test_fft);
+%IMG_COMP = imag(test_fft);
 SIG = REAL_COMP + 1i*IMG_COMP;
 
 % DATA_FORMAT
@@ -23,18 +29,18 @@ SIG = REAL_COMP + 1i*IMG_COMP;
 % "FIXT_SAT"        \/
 % "FIXT_SHIFT"      \/
 % "FIXT_EX"         \/
-DATA_FORMAT = "FIXT_SHIFT";
+DATA_FORMAT = "DOUBLE";
 
-[REAL_PART, IMAG_PART] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT);
+[REAL_PART, IMAG_PART] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT, INVERS);
 
-DATA_FORMAT = "DOUBLE_SHIFT";
+%DATA_FORMAT = "DOUBLE_SHIFT";
 
-[REAL_PART_D, IMAG_PART_D] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT);
+%[REAL_PART_D, IMAG_PART_D] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT);
 
 
 my_fft = double(REAL_PART + 1i*IMAG_PART);
-%true_fft = fft(SIG, CONVERSION_FORMAT);
-true_fft = double(REAL_PART_D + 1i*IMAG_PART_D);
+true_fft = ifft(SIG*32, CONVERSION_FORMAT);
+%true_fft = double(REAL_PART_D + 1i*IMAG_PART_D);
 %%
 
 f1 = fopen("cur_in_val.txt",'r');
@@ -47,8 +53,13 @@ disp("The file has been copied!");
 
 %% 
 FL = 15;
-fileNAME = "res.txt";
-hdl_fft = read_res_from_file(FL,CONVERSION_FORMAT, fileNAME);
+fileNAME = "res_r.txt";
+hdl_fft_r = read_res_from_file(FL,CONVERSION_FORMAT, fileNAME);
+fileNAME = "res_i.txt";
+hdl_fft_i = read_res_from_file(FL,CONVERSION_FORMAT, fileNAME);
+
+hdl_fft = (hdl_fft_r + 1i*hdl_fft_i);
+
 disp("The file has been read!");
 
 %% stem grafs

@@ -1,3 +1,37 @@
+//-----------------------------------------------------------------\\
+// Company: 
+// Engineer: Petrovsky Dmitry
+// 
+// Create Date: 07.02.2023
+// Design Name: Iterative Fast Fourier Transform (FFT)
+// Module Name: out_fft_FIFO_unit
+// Project Name: ThesisProjectFFT
+// Target Devices: Zeadboard
+//
+// Description: 
+// Модификация структуры FIFO заключается в использовании 
+// двух портов памяти для операции записи.
+// Для этого формируется два адресса записи по правилам последнего слоя FFT.
+// Чтение возможно только при наличии сигнала BLOCK.
+// Один из портов переключается с записи на чтение.
+// Во время записи чтение блокируется.
+// Так же чтение доступна в битреверсной адресации.
+// 
+// Revision:
+// Revision 1.00 - Code comented
+// Additional Comments:
+// 
+// Данное модифицированное FIFO содержит две двупортовые памяти для реальной и мнимой составляющей
+//
+//
+// -----!!!--ATTENTION--!!!-----
+// Не рекомендуется использовать это FIFO если НЕ будет происходить 
+// его полное заполнение и полесе полная выборка данных.
+// Так как при формировании флагов FULL и EMPTY учитывается только один адресс! 
+// Возможна ситуация с пропуском указателя чтения!
+// 
+//-----------------------------------------------------------------\\
+
 module out_fft_FIFO_unit #(
 	parameter DWL 					= 16,
 	parameter AWL 					= 8,
@@ -22,41 +56,44 @@ module out_fft_FIFO_unit #(
 	output wire 			R_EMPTY,
 	output wire 			WR_FULL
 );
-
+	//-----------Сигналы для работы с двумя портами памяти-------------\\
 	wire 				WrE_A;	
 	wire 				EN_A;
 	wire 				EN_B;
 	wire 	[AWL-1:0]	i_ADDR_B;
 
-
+	//-------------------Адреса выборки данных-------------------------\\
 	reg [AWL-1:0] r_addr;
 	wire [AWL-1:0] normal_r_addr;
 
-
+	//----------------------Адреса записи данных-----------------------\\
 	wire [AWL-1:0] wr_addr;
 	wire [AWL-1:0] wr_addr_2;	
 
+	//-----Расширенные адреса для формирования сигналов FULL EMPTY-----\\
 	wire [AWL:0] r_ptr;
 	wire [AWL:0] wr_ptr;
 
+	//-----------------------Управлющие сигналы------------------------\\
 	wire         full;
 	wire         empty;
-
 	wire 		 en_r;
 	wire 		 en_wr;
 
+	//----------------------Разрешающие сигналы------------------------\\
 	assign en_r = R_INC & !empty;
 	assign en_wr = WR_INC & !full;
 
+	//--------------Переключение порта с записи на чтение--------------\\
 	assign WrE_B 	= (BLOCK)?	1'b0 		: 1'b1;
 	assign EN_B 	= (BLOCK)? 	en_r 		: en_wr;
 	assign i_ADDR_B = (BLOCK)? 	r_addr 		: wr_addr_2;
 
 	assign R_EMPTY = empty;
 	assign WR_FULL = full;
-
 	assign EN_A 	= en_wr;
 
+	//--------------------Выбор адресации чтения-----------------------\\
 	generate
 		if (BIT_REVERS_RIDE) begin 
 			always @(normal_r_addr) 
@@ -106,7 +143,6 @@ module out_fft_FIFO_unit #(
 		.RST_A		(RST			),
 		.i_DATA_A	(WR_DATA_1_R	),
 		.i_ADDR_A	(wr_addr		),
-		//.o_DATA_A	(R_DATA_R		),
 
 		.CLK_B		(CLK			),
 		.WrE_B		(WrE_B			),
@@ -127,7 +163,6 @@ module out_fft_FIFO_unit #(
 		.RST_A		(RST			),
 		.i_DATA_A	(WR_DATA_1_I	),
 		.i_ADDR_A	(wr_addr		),
-		//.o_DATA_A	(R_DATA_2_I		),
 
 		.CLK_B		(CLK			),
 		.WrE_B		(WrE_B			),
@@ -138,13 +173,13 @@ module out_fft_FIFO_unit #(
 		.o_DATA_B	(R_DATA_I		)
 	);
 
+	//-----------------------------------------------------------------\\
 	function [AWL-1:0] BIT_REV(input [AWL-1:0] A);
 		integer i;
 		for (i = 0; i < AWL; i = i + 1) begin
 			BIT_REV[i] = A[AWL-i-1];
 		end 
 	endfunction
-
 endmodule
 
 module out_fft_FIFO_wptr_full #(

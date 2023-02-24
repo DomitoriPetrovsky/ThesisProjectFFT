@@ -91,7 +91,4 @@ module dual_port_RAM_unit #(
 
 		end
 	endgenerate
-
-endmodule 		
-			
-	
+endmodule

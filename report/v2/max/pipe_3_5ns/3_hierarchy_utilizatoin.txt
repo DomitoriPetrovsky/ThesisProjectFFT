@@ -1,0 +1,71 @@
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Fri Feb 24 11:39:08 2023
+| Host         : DESKTOP-6PS40RQ running 64-bit major release  (build 9200)
+| Command      : report_utilization -hierarchical
+| Design       : tb_speed_iter_fft
+| Device       : 7z020clg484-1
+| Design State : Routed
+------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++-----------------------------------+---------------------------------------+------------+------------+---------+------+-----+--------+--------+--------------+
+|              Instance             |                 Module                | Total LUTs | Logic LUTs | LUTRAMs | SRLs | FFs | RAMB36 | RAMB18 | DSP48 Blocks |
++-----------------------------------+---------------------------------------+------------+------------+---------+------+-----+--------+--------+--------------+
+| tb_speed_iter_fft                 |                                 (top) |        473 |        473 |       0 |    0 | 445 |      0 |      7 |            4 |
+|   (tb_speed_iter_fft)             |                                 (top) |          3 |          3 |       0 |    0 |  45 |      0 |      0 |            0 |
+|   fft                             |                          top_fft_iter |        470 |        470 |       0 |    0 | 400 |      0 |      7 |            4 |
+|     (fft)                         |                          top_fft_iter |         12 |         12 |       0 |    0 |   0 |      0 |      0 |            0 |
+|     a_i_reg                       |        param_register__parameterized2 |         26 |         26 |       0 |    0 |  15 |      0 |      0 |            0 |
+|     a_r_reg                       |      param_register__parameterized2_0 |         26 |         26 |       0 |    0 |  15 |      0 |      0 |            0 |
+|     block_reg                     |                        param_register |          1 |          1 |       0 |    0 |   1 |      0 |      0 |            0 |
+|     butterfly                     |           complex_butterfly_selection |        102 |        102 |       0 |    0 | 126 |      0 |      0 |            4 |
+|       cplx_but_4MUL_3ADD_3SUB     |   complex_butterfly_pipe_3_clk_cycles |        102 |        102 |       0 |    0 | 126 |      0 |      0 |            4 |
+|         (cplx_but_4MUL_3ADD_3SUB) |   complex_butterfly_pipe_3_clk_cycles |         62 |         62 |       0 |    0 |  66 |      0 |      0 |            4 |
+|         reg_dout1_im              |     param_register__parameterized2_14 |          3 |          3 |       0 |    0 |  15 |      0 |      0 |            0 |
+|         reg_dout1_re              |     param_register__parameterized2_15 |          3 |          3 |       0 |    0 |  15 |      0 |      0 |            0 |
+|         reg_dout2_im              |     param_register__parameterized2_16 |         17 |         17 |       0 |    0 |  15 |      0 |      0 |            0 |
+|         reg_dout2_re              |     param_register__parameterized2_17 |         17 |         17 |       0 |    0 |  15 |      0 |      0 |            0 |
+|     butterfly_address_gen         |            butterfly_address_gen_unit |         30 |         30 |       0 |    0 |  20 |      0 |      0 |            0 |
+|       addr_reg                    |     param_register__parameterized0_13 |         21 |         21 |       0 |    0 |  10 |      0 |      0 |            0 |
+|       ring_reg                    |                   ring_shift_register |          9 |          9 |       0 |    0 |  10 |      0 |      0 |            0 |
+|     control_unit_selection        |       control_unit_fft_iter_selection |         24 |         24 |       0 |    0 |  25 |      0 |      0 |            0 |
+|       control_unit                |       control_unit_fft_iter_3_cyc_but |         24 |         24 |       0 |    0 |  25 |      0 |      0 |            0 |
+|     delay_address_A               |                            delay_unit |         10 |         10 |       0 |    0 |  30 |      0 |      0 |            0 |
+|       genblk1[0].param            |     param_register__parameterized0_10 |          0 |          0 |       0 |    0 |  10 |      0 |      0 |            0 |
+|       genblk1[1].param            |     param_register__parameterized0_11 |          0 |          0 |       0 |    0 |  10 |      0 |      0 |            0 |
+|       genblk1[2].param            |     param_register__parameterized0_12 |         10 |         10 |       0 |    0 |  10 |      0 |      0 |            0 |
+|     delay_address_B               |                          delay_unit_1 |          0 |          0 |       0 |    0 |  30 |      0 |      0 |            0 |
+|       genblk1[0].param            |      param_register__parameterized0_7 |          0 |          0 |       0 |    0 |  10 |      0 |      0 |            0 |
+|       genblk1[1].param            |      param_register__parameterized0_8 |          0 |          0 |       0 |    0 |  10 |      0 |      0 |            0 |
+|       genblk1[2].param            |      param_register__parameterized0_9 |          0 |          0 |       0 |    0 |  10 |      0 |      0 |            0 |
+|     firstss_reg                   |                      param_register_2 |          1 |          1 |       0 |    0 |   1 |      0 |      0 |            0 |
+|     in_fifo                       |                      in_fft_FIFO_unit |         86 |         86 |       0 |    0 |  84 |      0 |      2 |            0 |
+|       ram_unit_i                  |    in_fft_FIFO_dual_port_RAM_MEM_unit |         30 |         30 |       0 |    0 |  30 |      0 |      1 |            0 |
+|       ram_unit_r                  |  in_fft_FIFO_dual_port_RAM_MEM_unit_6 |         30 |         30 |       0 |    0 |  30 |      0 |      1 |            0 |
+|       read_pointer_empty_flagg    |                in_fft_FIFO_rptr_empty |          8 |          8 |       0 |    0 |  12 |      0 |      0 |            0 |
+|       write_pointer_full_flag     |                 in_fft_FIFO_wptr_full |         18 |         18 |       0 |    0 |  12 |      0 |      0 |            0 |
+|     out_fifo                      |                     out_fft_FIFO_unit |         46 |         46 |       0 |    0 |  23 |      0 |      2 |            0 |
+|       ram_unit_i                  |   out_fft_FIFO_dual_port_RAM_MEM_unit |          0 |          0 |       0 |    0 |   0 |      0 |      1 |            0 |
+|       ram_unit_r                  | out_fft_FIFO_dual_port_RAM_MEM_unit_5 |          8 |          8 |       0 |    0 |   0 |      0 |      1 |            0 |
+|       read_pointer_empty_flagg    |               out_fft_FIFO_rptr_empty |         17 |         17 |       0 |    0 |  12 |      0 |      0 |            0 |
+|       write_pointer_full_flag     |                out_fft_FIFO_wptr_full |         21 |         21 |       0 |    0 |  11 |      0 |      0 |            0 |
+|     out_fifo_block_reg            |                      param_register_3 |          1 |          1 |       0 |    0 |   1 |      0 |      0 |            0 |
+|     valid_reg                     |                      param_register_4 |          0 |          0 |       0 |    0 |   1 |      0 |      0 |            0 |
+|     w_address_gen                 |                    w_address_gen_unit |        129 |        129 |       0 |    0 |  28 |      0 |      1 |            0 |
+|       (w_address_gen)             |                    w_address_gen_unit |          0 |          0 |       0 |    0 |   0 |      0 |      0 |            0 |
+|       addr_reg                    |        param_register__parameterized0 |        129 |        129 |       0 |    0 |  18 |      0 |      1 |            0 |
+|       ring_reg                    |   ring_shift_register__parameterized0 |          0 |          0 |       0 |    0 |  10 |      0 |      0 |            0 |
+|     workt_ram_unit_i              |                    dual_port_RAM_unit |          0 |          0 |       0 |    0 |   0 |      0 |      1 |            0 |
+|     workt_ram_unit_r              |                 dual_port_RAM_unit__1 |          0 |          0 |       0 |    0 |   0 |      0 |      1 |            0 |
++-----------------------------------+---------------------------------------+------------+------------+---------+------+-----+--------+--------+--------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining

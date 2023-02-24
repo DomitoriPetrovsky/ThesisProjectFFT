@@ -1,3 +1,40 @@
+//-----------------------------------------------------------------\\
+// Company: 
+// Engineer: Petrovsky Dmitry
+// 
+// Create Date: 07.02.2023
+// Design Name: Iterative Fast Fourier Transform (FFT)
+// Module Name: in_fft_FIFO_unit
+// Project Name: ThesisProjectFFT
+// Target Devices: Zeadboard
+//
+// Description: 
+// Модификация структуры FIFO заключается в использовании 
+// двух портов памяти для операции чтения.
+// Для этого формируется два адресса чтения.
+// Чтение возможно только при наличии сигнала BLOCK.
+// Во время чтения запись блокируется, все данные
+// поступившие на запись будут утеряны.
+// Так же запись доступна в битреверсной адресации.
+// 
+// Revision:
+// Revision 1.00 - Code comented
+// Additional Comments:
+// 
+// Данное модифицированное FIFO содержит две двупортовые памяти для реальной и мнимой составляющей
+//
+// Во время операции чтения через два порта сигналл FULL не поднимается
+// В формированиие сигнала FULL участвует только адресс 
+// перемещающийся по четным адрессам.
+//
+// -----!!!--ATTENTION--!!!-----
+// Не рекомендуется использовать это FIFO если НЕ будет происходить 
+// его полное заполнение и полесе полная выборка данных.
+// Так как при формировании флагов FULL и EMPTY учитывается только один адресс! 
+// Возможна ситуация с пропуском указателя записи!
+// 
+//-----------------------------------------------------------------\\
+
 module in_fft_FIFO_unit #(
 	parameter DWL 					= 16,
 	parameter AWL 					= 8,
@@ -23,41 +60,45 @@ module in_fft_FIFO_unit #(
 	output wire 			WR_FULL
 );
 
+	//-----------Сигналы для работы с двумя портами памяти-------------\\
 	wire 				WrE_A;	
 	wire 				EN_A;
 	wire 				EN_B;
 	wire 	[AWL-1:0]	i_ADDR_A;
 
-
+	//-------------------Адреса выборки данных-------------------------\\
 	wire [AWL-1:0] r_addr;
 	wire [AWL-1:0] r_addr_2;
 
+	//----------------------Адреса записи данных-----------------------\\
 	reg [AWL-1:0] wr_addr;
-
 	wire [AWL-1:0] normal_wr_addr;
-	
 
+	//-----Расширенные адреса для формирования сигналов FULL EMPTY-----\\
 	wire [AWL:0] r_ptr;
 	wire [AWL:0] wr_ptr;
-
+	
+	//-----------------------Управлющие сигналы------------------------\\
 	wire         full;
 	wire         empty;
-
 	wire 		 en_r;
 	wire 		 en_wr;
-
+	
+	//----------------------Разрешающие сигналы------------------------\\
 	assign en_r = R_INC & !empty;
 	assign en_wr = WR_INC & !full;
 
+	//--------------Переключение порта с записи на чтение--------------\\
 	assign WrE_A 	= (BLOCK)?	1'b0 		: 1'b1;
 	assign EN_A 	= (BLOCK)? 	en_r 		: en_wr;
 	assign i_ADDR_A = (BLOCK)? 	r_addr_2 	: wr_addr;
 
+
 	assign R_EMPTY = empty;
 	assign WR_FULL = full;
-
 	assign EN_B 	= en_r;
 
+	//--------------------Выбор адресации записи-----------------------\\
 	generate
 		if (BIT_REVERS_WRITE) begin 
 			always @(normal_wr_addr) 
@@ -139,13 +180,13 @@ module in_fft_FIFO_unit #(
 		.o_DATA_B	(R_DATA_1_I		)
 	);
 
+	//-----------------------------------------------------------------\\
 	function [AWL-1:0] BIT_REV(input [AWL-1:0] A);
 		integer i;
 		for (i = 0; i < AWL; i = i + 1) begin
 			BIT_REV[i] = A[AWL-i-1];
 		end 
 	endfunction
-
 endmodule
 
 module in_fft_FIFO_wptr_full #(
@@ -223,7 +264,6 @@ module in_fft_FIFO_rptr_empty #(
 	end
 
 	always @(*) begin
-		//r_b_next = (!R_EMPTY & BLOCK)? (r_bin + 2) : r_bin;
 		r_b_next = (!R_EMPTY & BLOCK)? (r_bin + {R_INC, 1'b0}) : r_bin;
 	end
 
@@ -249,8 +289,6 @@ module in_fft_FIFO_dual_port_RAM_MEM_unit #(
 	parameter INIT_FILE = "",
 	parameter RAM_PERFORMANCE = "LOW_LATENCY"
 )(
-	//input  wire				FULL, 
-
 	input  wire 		  	CLK_A,
 	input  wire 		  	WrE_A,
 	input  wire 		  	EN_A,

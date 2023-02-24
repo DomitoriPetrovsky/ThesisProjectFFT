@@ -1,7 +1,35 @@
+//-----------------------------------------------------------------\\
+// Company: 
+// Engineer: Petrovsky Dmitry
+// 
+// Create Date: 10.01.2023
+// Design Name: Iterative Fast Fourier Transform (FFT)
+// Module Name: butterfly_address_gen_unit
+// Project Name: ThesisProjectFFT
+// Target Devices: Zeadboard
+//
+// Description: Модуль генерации адреса поворачивающего множителя в таблице 
+// хранящей первую полуволну синуса и косинуса для модуля Бабочка
+// алгоритма БПФ с прореживанием по времени
+//
+// Revision:
+// Revision 1.00 - Code comented
+// Additional Comments:
+//
+// Parameters:
+// AWL				- Формат преобразования 2^AWL
+// synch_RESET		- Выбор сброса в тригерах синхронный(1), асинхронный(0).
+// 
+// Ports:
+// EN				- Разрешаю щий сигнал генерации следующего адреса 
+// LAY_EN			- Разрешающий сигнал смены адресации слоя 
+// W_ADDR			- Адрес поворачивающего множителя
+//
+//-----------------------------------------------------------------\\
+
 module w_address_gen_unit #(
 	parameter AWL = 5,
-	parameter synch_RESET = 1,
-	parameter RESET_LEVEL = 1
+	parameter synch_RESET = 1
 )(
 	input wire 					CLK,
 	input wire 					RST,
@@ -10,59 +38,36 @@ module w_address_gen_unit #(
 	output wire 	[AWL-1:0] 	W_ADDR
 );
 
-	localparam EDGE 		= 1;
-	localparam RESET 		= 1;
-	localparam ENABLE 		= 1;
-	localparam EN_LEVEL 	= 1;
-
 	localparam shLeft		= 0;
 	localparam RESET_VALUE	= {1'b1, {(AWL-1){1'b0}}};
-
 
 	wire [AWL-1:0] addr;
 	wire [AWL-1:0] next_addr;
 	wire [AWL-1:0] lay;
 	wire [AWL-1:0] mask = {1'b0, {(AWL-1){1'b1}}};
 
+	//--------------------Значение адреса W----------------------------\\
 	assign W_ADDR = addr & mask;
 
+	//----------------Формирование следующего адреса-------------------\\
 	assign next_addr = addr + lay;
 
 	param_register #(
-		.BITNESS	(AWL		),
-		.EDGE		(EDGE		),	
-		.RESET		(RESET		),
-		.synch_RESET(synch_RESET),
-		.RESET_LEVEL(RESET_LEVEL),
-		.ENABLE		(ENABLE		),
-		.EN_LEVEL	(EN_LEVEL	))
+		.BITNESS		(AWL			),
+		.synch_RESET	(synch_RESET	))
 	addr_reg(
-		.CLK		(CLK		),
-		.EN			(EN			),
-		.RST		(RST		),
-		.i_DATA		(next_addr	),
-		.o_DATA		(addr		)
+		.CLK			(CLK			),
+		.EN				(EN				),
+		.RST			(RST			),
+		.i_DATA			(next_addr		),
+		.o_DATA			(addr			)
 	);
-/*
-	always @(posedge CLK) begin
-		if (RST) begin 
-			addr <= 0;
-		end else begin
-			if(EN) begin
-				addr <= addr + lay;
-			end
-		end
-	end
-*/
 
 	ring_shift_register #(
 		.BITNESS 		(AWL			),
 		.shLeft			(shLeft			),
-		.EDGE			(EDGE			),
 		.synch_RESET	(synch_RESET	),
-		.RESET_LEVEL	(RESET_LEVEL	),
-		.RESET_VALUE	(RESET_VALUE	),
-		.EN_LEVEL		(EN_LEVEL		))
+		.RESET_VALUE	(RESET_VALUE	))
 	ring_reg(
 		.CLK			(CLK			),
 		.EN				(LAY_EN			),
@@ -70,15 +75,4 @@ module w_address_gen_unit #(
 		.o_DATA			(lay			)
 	);
 	
-/*
-	always @(posedge CLK) begin
-		if (RST) begin 
-			lay <= {1'b1, {(AWL-1){1'b0}}};
-		end else begin
-			if (LAY_EN) begin
-				lay <= {lay[0], lay[AWL-1:1]};
-			end
-		end
-	end
-*/
 endmodule

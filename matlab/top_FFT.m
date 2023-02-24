@@ -8,7 +8,7 @@
 %   "FIXT_SHIFT"      \/
 %   "FIXT_EX"        \/
 %
-function [REAL_PART, IMAG_PART] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT)
+function [REAL_PART, IMAG_PART] = top_FFT(REAL_COMP, IMG_COMP, CONVERSION_FORMAT, DATA_FORMAT, INVERS)
 
 LAYER_NUM = log2(CONVERSION_FORMAT);
 BUT_NUM = CONVERSION_FORMAT/2;
@@ -91,7 +91,11 @@ end
 
 
 % generate 
-w_i = -sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "SIN", DATA_F, F, T_W);
+w_i = sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "SIN", DATA_F, F, T_W);
+if (INVERS == 0)
+    w_i = -w_i;
+end
+
 w_r =  sin_cos_table(1, CONVERSION_FORMAT, BUT_NUM, "COS", DATA_F, F, T_W);
 
 DEBUG_LAYERS = zeros(CONVERSION_FORMAT , LAYER_NUM);
@@ -116,7 +120,7 @@ if DATA_F == "FIXT"
     REAL_COMP = fi(REAL_COMP, T_D, F);
     IMG_COMP = fi(IMG_COMP, T_D, F);
     
-    bit_rev_address = 1;
+    bit_rev_address = 0;
     FILE_NAME = "cur_in_val.txt";
     input_file_gen(REAL_COMP, IMG_COMP, bit_rev_address, FILE_NAME);
 
@@ -138,7 +142,7 @@ for lay = 1:LAYER_NUM
         
         [picup_addr_A, picup_addr_B, dest_addr_X, dest_addr_Y, add_AB] = address_gen(lay, add_AB, CONVERSION_FORMAT);
 
-        %if( (dest_addr_X == 8 || dest_addr_X == 9) && lay == 1)
+        %if( lay == 1)
         %   disp("point") 
         %end
         

@@ -1,3 +1,39 @@
+//-----------------------------------------------------------------\\
+// Company: 
+// Engineer: Petrovsky Dmitry
+// 
+// Create Date: 10.01.2023
+// Design Name: Iterative Fast Fourier Transform (FFT)
+// Module Name: control_unit_fft_iter_selection
+// Project Name: ThesisProjectFFT
+// Target Devices: Zeadboard
+//
+// Description: Данный блок выбирает один из 5 блоков контроля.
+// 
+// Revision:
+// Revision 1.00 - Code comented
+// Additional Comments:
+//
+// Parameters:
+// LAYERS			- Количество слоев в преобразовании FFT
+// BUTTERFLYES		- Количество операций Бабочка на 1 слой
+// LayWL			- Количество битов выделяемых для счетчика слоев в устройстве управления
+// ButtWL			- Количество битов выделяемых для счетчика бабочек в устройстве управления
+// BUT_CLK_CYCLE	- Количество тактов выполнения операции бабочка 
+// 
+// Ports:
+// BUSY				- 
+// BUT_STROB		- Сигнал стробирования модуля Бабочка
+// LAY_EN			- Разрешающий сигнал смены адресации слоя 
+// ADDR_EN			- Разрешаю щий сигнал генерации следующего адреса 
+// ADDR_RST			- Сброс устройства адреса 
+// RAM_EN_R			- Разрешающий сигнал чтения для RAM
+// RAM_EN_WR		- Разрешающий сигнал записи для RAM
+// Wr				- Режим работы портов RAM чтение(0) запись(1)
+// LAST_LAY			- Сигнал переключения записи в выходное FIFO
+//
+//-----------------------------------------------------------------\\
+
 module control_unit_fft_iter_selection #(
 	parameter LAYERS 		= 5,
 	parameter BUTTERFLYES 	= 16,
@@ -12,7 +48,6 @@ module control_unit_fft_iter_selection #(
 	input 	wire					START,	
 
 	output	wire					BUSY,
-
 	output 	wire					BUT_STROB,
 	output 	wire					LAY_EN,
 	output 	wire					ADDR_EN,

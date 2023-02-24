@@ -1,12 +1,7 @@
 module delay_unit #(
 	parameter BITNESS = 16,
 	parameter delay = 3,
-	parameter EDGE = 1,
-	parameter RESET = 1,
-	parameter synch_RESET = 1,
-	parameter RESET_LEVEL = 1,
-	parameter ENABLE = 1,
-	parameter EN_LEVEL = 1
+	parameter synch_RESET = 1
 )(
 	input  wire 		  		CLK,
 	input  wire 		  		EN,
@@ -25,12 +20,7 @@ module delay_unit #(
 		for (i = 0; i < delay; i = i + 1) begin 
 			param_register #(
 			.BITNESS	(BITNESS		),
-			.EDGE		(EDGE			),
-			.RESET		(RESET			),
-			.synch_RESET(synch_RESET	),
-			.RESET_LEVEL(RESET_LEVEL	),
-			.ENABLE		(ENABLE			),
-			.EN_LEVEL	(EN_LEVEL		))
+			.synch_RESET(synch_RESET	))
 		param (
 			.CLK		(CLK			),
 			.EN			(EN				),
@@ -40,6 +30,4 @@ module delay_unit #(
 		);
 		end
 	endgenerate
-
-
 endmodule
