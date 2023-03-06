@@ -73,9 +73,9 @@ module control_unit_fft_iter_5_cyc_but #(
 	//-----------------Состояние управляющего автомата-----------------\\
 	localparam FSM_STATE_WAIT 		= 0; // 3'b000
 	localparam FSM_STATE_R 			= 4; // 3'b100
-	localparam FSM_STATE_STROB	 	= 5; // 3'b101
-	localparam FSM_STATE_ADDRgen_WR = 1; // 3'b001
-	localparam FSM_STATE_DELAY_1 	= 3; // 3'b011
+	localparam FSM_STATE_DELAY_1 	= 5; // 3'b101
+	localparam FSM_STATE_STROB	 	= 1; // 3'b001
+	localparam FSM_STATE_ADDRgen_WR = 3; // 3'b011
 	localparam FSM_STATE_DELAY_2 	= 2; // 3'b010
 	
 	

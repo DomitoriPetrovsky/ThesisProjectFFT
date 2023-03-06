@@ -72,9 +72,10 @@ module control_unit_fft_iter_4_cyc_but #(
 	//-----------------Состояние управляющего автомата-----------------\\
 	localparam FSM_STATE_WAIT 		= 0; // 3'b000
 	localparam FSM_STATE_R 			= 4; // 3'b100
-	localparam FSM_STATE_STROB	 	= 5; // 3'b101
-	localparam FSM_STATE_ADDRgen_WR = 7; // 3'b111
-	localparam FSM_STATE_DELAY_1 	= 6; // 3'b110
+	localparam FSM_STATE_DELAY_1 	= 5; // 3'b101
+	localparam FSM_STATE_STROB	 	= 7; // 3'b111
+	localparam FSM_STATE_ADDRgen_WR = 6; // 3'b110
+
 	
 	reg 	[FSM_BITNESS-1:0]	state;
 	reg 	[FSM_BITNESS-1:0]	next_state;
