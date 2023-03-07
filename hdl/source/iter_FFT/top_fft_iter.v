@@ -215,7 +215,7 @@ module top_fft_iter #(
 
 	//-----------------------------------------------------------------\\
 	assign FULL					= tmp_full;
-	assign VALID				= tmp_valid;
+	assign VALID				= tmp_out_fifo_block & tmp_valid;
  
 
 	//----------------Модифицированное входное FIFO--------------------\\
