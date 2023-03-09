@@ -1,9 +1,12 @@
 s = audioread("sample-3s.wav");
 
-k =  4578;%5678;
+k =  9421;%5678;
 N = 1024;
 
-data =  s(k:k+N-1);
+data_1 =  s(k:k+N-1);
+k = 428 ;
+data_2 =  s(k:k+N-1);
+data =  data_1 + 1i*data_2;
 true_fft = fft(data, N);
 
 figure('Name','Amplitude and phase spectrum(MY and TRUE)','NumberTitle','off');

@@ -116,9 +116,14 @@ if DATA_F == "FIXT"
     DEBUG_W_VAL_i = fi(DEBUG_W_VAL, T_W, F);
     DEBUG_W_VAL_r = fi(DEBUG_W_VAL, T_W, F);
     
+    eror_r = REAL_COMP;
+    eror_i = IMG_COMP;
     
     REAL_COMP = fi(REAL_COMP, T_D, F);
     IMG_COMP = fi(IMG_COMP, T_D, F);
+    
+    %eror_r = eror_r - REAL_COMP;
+   % eror_i = eror_i - IMG_COMP;
     
     bit_rev_address = 0;
     FILE_NAME = "cur_in_val.txt";

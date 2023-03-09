@@ -5,22 +5,22 @@ CLK_1 = 100E6;
 
 CLK_1_per = 1/ CLK_1;
 
-CLK_2_per = CLK_1_per * ceil(N/2^AWL) ;
+%CLK_2_per = CLK_1_per * ceil(N/2^AWL) ;
 
 
-CLK_2 = 1/CLK_2_per;
+%CLK_2 = 1/CLK_2_per;
 
-disp("CLK_1 = " + num2str(CLK_1, "%10.3e"));
-disp("CLK_2 = " + num2str(CLK_2, "%10.3e"));
+%disp("CLK_1 = " + num2str(CLK_1, "%10.3e"));
+%disp("CLK_2 = " + num2str(CLK_2, "%10.3e"));
 
 
 
 BCC = [2 3 4 5 6];
-CLK_per = zeros(1, 5);
-data = zeros(1, 5);
+CLK_fft = zeros(1, 5);
+CLK_data = zeros(1, 5);
 
-CLK_per(1:end) = 10E-9;
-CLK_per = [5.5E-9 5E-9 6E-9 7E-9 7E-9];
+CLK_fft(1:end) = 10E-9;
+CLK_fft = [5.5E-9 5E-9 6E-9 7E-9 7E-9];
 
 for(i = 1:5)
     if (BCC(i) < 4)
@@ -28,15 +28,15 @@ for(i = 1:5)
     else
         N = 2^(AWL-1)*AWL*BCC(i) + 4 + 4;
     end
-    data(i) = CLK_per(i) * ceil(N/2^AWL);
+    CLK_data(i) = CLK_fft(i) * ceil(N/2^AWL);
     
 end
 
 figure('Name','FFT Timing analysis','NumberTitle','off');
 subplot(2, 1, 1);
-stem(BCC, data);
+stem(BCC, CLK_data);
 hold on;
-plot(BCC, data);
+plot(BCC, CLK_data);
 %%ylim([0.5E-7 4E-7])
 %%yticks([50E-9:50E-9:400E-9]);
 %%yticklabels({'y = 50ns','y = 100ns','y = 150ns'})
@@ -46,9 +46,9 @@ xlabel("Butterfly clocks");
 ylabel("s");
 title("CLK period");
 subplot(2, 1, 2);
-stem(BCC, 1./data);
+stem(BCC, 1./CLK_data);
 hold on;
-plot(BCC, 1./data);
+plot(BCC, 1./CLK_data);
 xticks([2:1:6]);
 xticklabels({'2','3', '4', '5', '6'})
 xlabel("Butterfly clocks");
