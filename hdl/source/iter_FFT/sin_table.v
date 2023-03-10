@@ -75,7 +75,7 @@ module sin_table_unit #(
 
 	//------------------Выборка данных из таблицы таблицы--------------\\
     always @(i_ADDR) begin
-		o_DATA <= tabel[i_ADDR];
+		o_DATA = tabel[i_ADDR];
 	end
 endmodule 		
 			

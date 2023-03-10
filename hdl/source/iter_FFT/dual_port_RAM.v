@@ -23,8 +23,8 @@ module dual_port_RAM_unit #(
 	localparam RAM_DEPTH = 2**AWL;
 
 	reg [DWL-1:0] RAM [RAM_DEPTH-1:0];
-	reg [DWL-1:0] RAM_data_a  = {DWL{1'b0}};
-	reg [DWL-1:0] RAM_data_b  = {DWL{1'b0}};
+	reg [DWL-1:0] RAM_data_a;  //= {DWL{1'b0}};
+	reg [DWL-1:0] RAM_data_b;  //= {DWL{1'b0}};
 
 	generate
 		if (INIT_FILE != "") begin: use_init_file
@@ -41,9 +41,9 @@ module dual_port_RAM_unit #(
 	always @(posedge CLK_A) begin
 		if (EN_A) begin 
 			if (WrE_A) begin
-				RAM[i_ADDR_A] <=  i_DATA_A;
+				RAM[i_ADDR_A] 	<=  i_DATA_A;
 			end else begin 
-				RAM_data_a <= RAM[i_ADDR_A];
+				RAM_data_a 		<= RAM[i_ADDR_A];
 			end
 		end
 	end
@@ -51,9 +51,9 @@ module dual_port_RAM_unit #(
 	always @(posedge CLK_B) begin
 		if (EN_B) begin 
 			if (WrE_B) begin
-				RAM[i_ADDR_B] <=  i_DATA_B;
+				RAM[i_ADDR_B] 	<=  i_DATA_B;
 			end else begin 
-				RAM_data_b <= RAM[i_ADDR_B];
+				RAM_data_b 		<= RAM[i_ADDR_B];
 			end
 		end
 	end
@@ -67,8 +67,8 @@ module dual_port_RAM_unit #(
 		end else begin : output_register
 			// The following is a 2 clock cycle read latency with improve clock-to-out timing
 
-			reg [DWL-1:0] dout_a_reg = {DWL{1'b0}};
-			reg [DWL-1:0] dout_b_reg = {DWL{1'b0}};
+			reg [DWL-1:0] dout_a_reg; //= {DWL{1'b0}};
+			reg [DWL-1:0] dout_b_reg; //= {DWL{1'b0}};
 
 			always @(posedge CLK_A) begin
 				if (RST_A) begin 

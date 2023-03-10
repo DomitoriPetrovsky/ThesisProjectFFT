@@ -63,34 +63,34 @@ module out_fft_FIFO_unit #(
 	wire 	[AWL-1:0]	i_ADDR_B;
 
 	//-------------------Адреса выборки данных-------------------------\\
-	reg [AWL-1:0] r_addr;
-	wire [AWL-1:0] normal_r_addr;
+	reg 	[AWL-1:0] 	r_addr;
+	wire 	[AWL-1:0] 	normal_r_addr;
 
 	//----------------------Адреса записи данных-----------------------\\
-	wire [AWL-1:0] wr_addr;
-	wire [AWL-1:0] wr_addr_2;	
+	wire 	[AWL-1:0]	wr_addr;
+	wire 	[AWL-1:0]	wr_addr_2;	
 
 	//-----Расширенные адреса для формирования сигналов FULL EMPTY-----\\
-	wire [AWL:0] r_ptr;
-	wire [AWL:0] wr_ptr;
+	wire	[AWL:0] 	r_ptr;
+	wire 	[AWL:0] 	wr_ptr;
 
 	//-----------------------Управлющие сигналы------------------------\\
-	wire         full;
-	wire         empty;
-	wire 		 en_r;
-	wire 		 en_wr;
+	wire         		full;
+	wire         		empty;
+	wire 		 		en_r;
+	wire 		 		en_wr;
 
 	//----------------------Разрешающие сигналы------------------------\\
-	assign en_r = R_INC & !empty;
-	assign en_wr = WR_INC & !full;
+	assign en_r 	= R_INC & !empty;
+	assign en_wr 	= WR_INC & !full;
 
 	//--------------Переключение порта с записи на чтение--------------\\
 	assign WrE_B 	= (BLOCK)?	1'b0 		: 1'b1;
 	assign EN_B 	= (BLOCK)? 	en_r 		: en_wr;
 	assign i_ADDR_B = (BLOCK)? 	r_addr 		: wr_addr_2;
 
-	assign R_EMPTY = empty;
-	assign WR_FULL = full;
+	assign R_EMPTY 	= empty;
+	assign WR_FULL 	= full;
 	assign EN_A 	= en_wr;
 
 	//--------------------Выбор адресации чтения-----------------------\\
@@ -220,7 +220,7 @@ module out_fft_FIFO_wptr_full #(
 	// FIFO empty on reset or when the next r_ptr == synchronized w_ptr
 	always @(posedge WR_CLK) begin
 		if (WR_RST) begin 
-			WR_FULL = 1'b0;
+			WR_FULL <= 1'b0;
 		end else begin 
 			WR_FULL <= ((WR_PTR[AWL]     != R_PTR_2[AWL]  ) &&
 						(WR_PTR[AWL-1:0] == R_PTR_2[AWL-1:0]));
@@ -269,7 +269,7 @@ module out_fft_FIFO_rptr_empty #(
 	// FIFO empty on reset or when the next r_ptr == synchronized w_ptr
 	always @(posedge R_CLK) begin
 		if (R_RST) begin 
-			R_EMPTY = 1'b1;
+			R_EMPTY <= 1'b1;
 		end else begin 
 			R_EMPTY <= (r_b_next == WR_PTR_2);
 		end

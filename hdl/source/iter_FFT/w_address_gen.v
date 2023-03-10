@@ -44,7 +44,9 @@ module w_address_gen_unit #(
 	wire [AWL-1:0] addr;
 	wire [AWL-1:0] next_addr;
 	wire [AWL-1:0] lay;
-	wire [AWL-1:0] mask = {1'b0, {(AWL-1){1'b1}}};
+	wire [AWL-1:0] mask;
+	
+	assign mask = {1'b0, {(AWL-1){1'b1}}};
 
 	//--------------------Значение адреса W----------------------------\\
 	assign W_ADDR = addr & mask;

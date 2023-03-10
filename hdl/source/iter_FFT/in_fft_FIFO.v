@@ -67,26 +67,26 @@ module in_fft_FIFO_unit #(
 	wire 	[AWL-1:0]	i_ADDR_A;
 
 	//-------------------Адреса выборки данных-------------------------\\
-	wire [AWL-1:0] r_addr;
-	wire [AWL-1:0] r_addr_2;
+	wire 	[AWL-1:0] 	r_addr;
+	wire 	[AWL-1:0] 	r_addr_2;
 
 	//----------------------Адреса записи данных-----------------------\\
-	reg [AWL-1:0] wr_addr;
-	wire [AWL-1:0] normal_wr_addr;
+	reg 	[AWL-1:0] 	wr_addr;
+	wire 	[AWL-1:0] 	normal_wr_addr;
 
 	//-----Расширенные адреса для формирования сигналов FULL EMPTY-----\\
-	wire [AWL:0] r_ptr;
-	wire [AWL:0] wr_ptr;
+	wire 	[AWL:0] 	r_ptr;
+	wire 	[AWL:0] 	wr_ptr;
 	
 	//-----------------------Управлющие сигналы------------------------\\
-	wire         full;
-	wire         empty;
-	wire 		 en_r;
-	wire 		 en_wr;
+	wire         		full;
+	wire         		empty;
+	wire 		 		en_r;
+	wire 		 		en_wr;
 	
 	//----------------------Разрешающие сигналы------------------------\\
-	assign en_r = R_INC & !empty;
-	assign en_wr = WR_INC & !full;
+	assign en_r 	= R_INC & !empty;
+	assign en_wr 	= WR_INC & !full;
 
 	//--------------Переключение порта с записи на чтение--------------\\
 	assign WrE_A 	= (BLOCK)?	1'b0 		: 1'b1;
@@ -94,8 +94,8 @@ module in_fft_FIFO_unit #(
 	assign i_ADDR_A = (BLOCK)? 	r_addr_2 	: wr_addr;
 
 
-	assign R_EMPTY = empty;
-	assign WR_FULL = full;
+	assign R_EMPTY 	= empty;
+	assign WR_FULL 	= full;
 	assign EN_B 	= en_r;
 
 	//--------------------Выбор адресации записи-----------------------\\
@@ -217,14 +217,14 @@ module in_fft_FIFO_wptr_full #(
 	end
 
 	//MEmory read-address pointer
-	assign WR_ADDR = wr_bin[AWL-1:0];
-	assign WR_PTR = wr_b_next;
+	assign WR_ADDR 	= wr_bin[AWL-1:0];
+	assign WR_PTR 	= wr_b_next;
 	
 
 	// FIFO empty on reset or when the next r_ptr == synchronized w_ptr
 	always @(posedge WR_CLK) begin
 		if (WR_RST) begin 
-			WR_FULL = 1'b0;
+			WR_FULL <= 1'b0;
 		end else begin 
 			WR_FULL <= ((wr_b_next[AWL]     != R_PTR_2[AWL]  ) &&
 						(wr_b_next[AWL-1:0] == R_PTR_2[AWL-1:0]));
@@ -268,14 +268,14 @@ module in_fft_FIFO_rptr_empty #(
 	end
 
 	//MEmory read-address pointer
-	assign R_ADDR = r_bin[AWL-1:0];
-	assign R_ADDR_2 = r_bin[AWL-1:0] | 1;
-	assign R_PTR = r_bin;
+	assign R_ADDR 		= r_bin[AWL-1:0];
+	assign R_ADDR_2 	= r_bin[AWL-1:0] | 1;
+	assign R_PTR 		= r_bin;
 
 	// FIFO empty on reset or when the next r_ptr == synchronized w_ptr
 	always @(posedge R_CLK) begin
 		if (R_RST) begin 
-			R_EMPTY = 1'b1;
+			R_EMPTY <= 1'b1;
 		end else begin 
 			R_EMPTY <= (r_b_next == WR_PTR_2);
 		end
@@ -373,8 +373,6 @@ module in_fft_FIFO_dual_port_RAM_MEM_unit #(
 
 			assign o_DATA_A =  dout_a_reg;
 			assign o_DATA_B =  dout_b_reg;
-
 		end
 	endgenerate
-
 endmodule

@@ -18,20 +18,20 @@ module ring_shift_register #(
 		if (shLeft == 0) begin 
 			always @(posedge CLK or posedge RST) begin
 				if (RST) begin
-					Q = RESET_VALUE; 
+					Q <= RESET_VALUE; 
 				end else begin 
 					if (EN)  begin
-						Q = { Q[0], Q[BITNESS-1:1]};
+						Q <= { Q[0], Q[BITNESS-1:1]};
 					end
 				end
 			end
 		end else begin 
 			always @(posedge CLK or posedge RST) begin
 				if (RST) begin
-					Q = RESET_VALUE; 
+					Q <= RESET_VALUE; 
 				end else begin 
 					if (EN)  begin
-						Q = {Q[BITNESS-2:0], Q[BITNESS-1]};
+						Q <= {Q[BITNESS-2:0], Q[BITNESS-1]};
 					end
 				end
 			end
@@ -40,20 +40,20 @@ module ring_shift_register #(
 		if (shLeft == 0) begin 
 			always @(posedge CLK) begin
 				if (RST) begin
-					Q = RESET_VALUE; 
+					Q <= RESET_VALUE; 
 				end else begin 
 					if (EN)  begin
-						Q = { Q[0], Q[BITNESS-1:1]};
+						Q <= { Q[0], Q[BITNESS-1:1]};
 					end
 				end
 			end
 		end else begin 
 			always @(posedge CLK) begin
 				if (RST) begin
-					Q = RESET_VALUE; 
+					Q <= RESET_VALUE; 
 				end else begin 
 					if (EN)  begin
-						Q = {Q[BITNESS-2:0], Q[BITNESS-1]};
+						Q <= {Q[BITNESS-2:0], Q[BITNESS-1]};
 					end
 				end
 			end
